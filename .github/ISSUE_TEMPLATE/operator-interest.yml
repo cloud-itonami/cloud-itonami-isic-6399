@@ -1,0 +1,43 @@
+name: Operator interest / 運営に興味があります
+description: この vertical を fork して運営する(または managed 提供を受ける)ことに関心がある方はこちら
+title: "[operator-interest] "
+labels: ["operator-interest"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ありがとうございます。fork は承認不要です(AGPL) — このフォームは
+        認証(itonami.cloud listing)・managed 提供・導入支援に関心がある方の
+        連絡経路です。docs/operator-quickstart.md と docs/business-model.md を
+        先に一読ください。
+  - type: input
+    id: org
+    attributes:
+      label: 組織 / Organization
+      placeholder: 例: ○○協同組合 / ○○市就労支援課 / SIer
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: 運営形態 / Mode
+      options:
+        - self-host (自組織で運営)
+        - managed (運営を委託したい)
+        - SI / consultant (顧客向けに構築したい)
+    validations:
+      required: true
+  - type: input
+    id: region
+    attributes:
+      label: 対象地域・法域 / Region & jurisdiction
+      placeholder: 例: 日本(神奈川) / JPN
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 想定ユースケース・時期 / Use case & timeline
+      placeholder: どんな対象に、いつ頃から運営したいか。既存システムからの移行があればその旨も。
+    validations:
+      required: true
