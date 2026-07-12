@@ -132,20 +132,21 @@ clojure -M:lint        # clj-kondo (errors fail; CI mirrors this)
 ## Live demo (GitHub Pages)
 
 **<https://cloud-itonami.github.io/cloud-itonami-isic-6399/>** -- a
-static, zero-build search UI over the demo posting set (synthetic
-data). Only governor-passed postings are in the search index; the page
-also shows, transparently, every posting the governor REFUSED and
-which HARD check refused it. The hold verdicts on the page are not
-hand-typed: `web/generate.cljs` (nbb) recomputes them at build time by
-running the actor's own `jobsearchops.registry`/`jobsearchops.facts`
-(.cljc), and in-browser search is `web/search.cljs` run by scittle
-(ClojureScript in the browser -- no hand-written JS, no build step).
-`web/verify_search.cljs` is the headless nbb harness that exercises
-the real client logic against the real generated page.
+static, zero-build search UI (synthetic data). NOTHING on it is
+hand-typed: `web/generate.cljs` (nbb) runs the FULL OperationActor
+StateGraph at build time (ingest -> assess -> publish -> delist with
+approval interrupts, plus every HARD-hold attempt and a double-publish
+attempt), then renders the post-run Store as the live index, the real
+refusal verdicts as the transparency table, and the append-only audit
+ledger those runs actually wrote. In-browser search is
+`web/search.cljs` run by scittle (ClojureScript in the browser -- no
+hand-written JS, no build step). `web/verify_search.cljs` is the
+headless nbb harness that exercises the real client logic against the
+real generated page.
 
 ```bash
 cd web && ../../../../node_modules/.bin/nbb \
-  --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src" \
+  --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
   generate.cljs          # regenerate docs/index.html + docs/search.cljs
 ../../../../node_modules/.bin/nbb verify_search.cljs   # headless UI logic check
 ```
