@@ -21,7 +21,8 @@
 ;;   ../../../../node_modules/.bin/nbb \
 ;;     --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
 ;;     generate.cljs
-(require '[clojure.string :as cstr]
+(require '[clojure.edn :as edn]
+         '[clojure.string :as cstr]
          '[html.core :as html]
          '[css.core :as css]
          '[langgraph.graph :as g]
@@ -29,7 +30,29 @@
          '[jobsearchops.operation :as op]
          '["fs" :as fs])
 
-(def db (store/seed-db))
+;; -- operator mode ------------------------------------------------------------
+;; `nbb ... generate.cljs <your-postings.edn>` builds YOUR governed board:
+;; every posting in the file is assessed and then submitted for publication
+;; through the real actor; whatever the governor holds appears in the
+;; transparency table with its real verdict, and only what it passes (and a
+;; human approved) reaches the index. See `postings.example.edn` for the
+;; record shape and docs/operator-quickstart.md for the fork-to-published
+;; walkthrough. With no argument, the actor's own demo set + demo lifecycle
+;; (including the delisting story and a double-publish attempt) is used.
+(def operator-file (first *command-line-args*))
+(def operator-postings
+  (when operator-file
+    (edn/read-string (fs/readFileSync operator-file "utf8"))))
+
+(def db
+  (if operator-postings
+    (store/with-postings
+      (store/->MemStore (atom {:postings {} :assessments {} :ledger []
+                               :publication-sequences {} :publication-records []
+                               :delisting-sequences {} :delisting-records []}))
+      (into {} (map (juxt :id identity) operator-postings)))
+    (store/seed-db)))
+
 (def actor (op/build db))
 
 (def operator {:actor-id "op-1" :actor-role :portal-operator :phase 3})
@@ -47,39 +70,60 @@
 
 ;; -- the build-time lifecycle -------------------------------------------------
 
-;; a page-only clean posting, ingested through the REAL :posting/ingest op
-;; (auto-commits when governor-clean at phase 3) so the live index still has
-;; two postings after posting-1's delisting below.
-(exec! "t0" {:op :posting/ingest :subject "posting-8"
-            :patch {:id "posting-8" :title "Forklift Operator" :employer "Yama Warehouse"
-                    :source "employer-direct"
-                    :source-hourly-wage 1700 :source-monthly-hours 160 :displayed-compensation 272000.0
-                    :ad-content-discriminatory? false :source-vacancy-closed? false
-                    :requires-source-consent? false :source-consent-verified? false
-                    :published? false :delisted? false
-                    :jurisdiction "JPN" :status :ingested}})
+(defn- violations-of [run] (get-in run [:state :verdict :violations]))
 
-;; clean lifecycles: publish posting-6/posting-8; posting-1 is published and
-;; then delisted (the 的確表示 currency duty's other half: a filled vacancy
-;; leaves the index).
-(doseq [[tid pid] [["a1" "posting-1"] ["a6" "posting-6"] ["a8" "posting-8"]]]
-  (exec! (str tid "-assess") {:op :jurisdiction/assess :subject pid})
-  (exec! (str tid "-publish") {:op :posting/publish :subject pid}))
-(exec! "a1-delist" {:op :posting/delist :subject "posting-1"})
+(def held
+  (if operator-postings
+    ;; OPERATOR MODE: assess + publish every posting; the governor decides.
+    ;; An assess-time hold (e.g. an uncatalogued jurisdiction) is reported
+    ;; with its own verdict and the publish attempt is skipped.
+    (vec
+     (keep (fn [{:keys [id] :as _p}]
+             (let [a (exec! (str id "-assess") {:op :jurisdiction/assess :subject id})]
+               (if (= :hold (get-in a [:state :disposition]))
+                 {:posting (store/posting db id) :violations (violations-of a)
+                  :note "法域アセスメント時点で拒否"}
+                 (let [r (exec! (str id "-publish") {:op :posting/publish :subject id})]
+                   (when (= :hold (get-in r [:state :disposition]))
+                     {:posting (store/posting db id) :violations (violations-of r)})))))
+           (sort-by :id operator-postings)))
 
-;; the HARD-hold attempts, one per governor check (posting-2's spec-basis
-;; hold happens at assess; the rest assess cleanly, then fail publish).
-(def no-spec-run
-  (exec! "h2-assess" {:op :jurisdiction/assess :subject "posting-2" :no-spec? true}))
+    ;; DEMO MODE: the same lifecycle jobsearchops.sim walks.
+    (do
+      ;; a page-only clean posting, ingested through the REAL :posting/ingest
+      ;; op (auto-commits when governor-clean at phase 3) so the live index
+      ;; still has two postings after posting-1's delisting below.
+      (exec! "t0" {:op :posting/ingest :subject "posting-8"
+                   :patch {:id "posting-8" :title "Forklift Operator" :employer "Yama Warehouse"
+                           :source "employer-direct"
+                           :source-hourly-wage 1700 :source-monthly-hours 160 :displayed-compensation 272000.0
+                           :ad-content-discriminatory? false :source-vacancy-closed? false
+                           :requires-source-consent? false :source-consent-verified? false
+                           :published? false :delisted? false
+                           :jurisdiction "JPN" :status :ingested}})
 
-(def hold-runs
-  (vec
-   (for [[tid pid] [["h3" "posting-3"] ["h4" "posting-4"] ["h5" "posting-5"] ["h7" "posting-7"]]]
-     (do (exec! (str tid "-assess") {:op :jurisdiction/assess :subject pid})
-         [pid (exec! (str tid "-publish") {:op :posting/publish :subject pid})]))))
+      ;; clean lifecycles: publish posting-6/posting-8; posting-1 is published
+      ;; and then delisted (the 的確表示 currency duty's other half: a filled
+      ;; vacancy leaves the index).
+      (doseq [[tid pid] [["a1" "posting-1"] ["a6" "posting-6"] ["a8" "posting-8"]]]
+        (exec! (str tid "-assess") {:op :jurisdiction/assess :subject pid})
+        (exec! (str tid "-publish") {:op :posting/publish :subject pid}))
+      (exec! "a1-delist" {:op :posting/delist :subject "posting-1"})
 
-;; the double-actuation guard, exercised for real: posting-1 again.
-(def double-publish-run (exec! "g1" {:op :posting/publish :subject "posting-1"}))
+      ;; the HARD-hold attempts, one per governor check (posting-2's
+      ;; spec-basis hold happens at assess; the rest assess cleanly, then
+      ;; fail publish), plus the double-actuation guard on posting-1.
+      (let [no-spec (exec! "h2-assess" {:op :jurisdiction/assess :subject "posting-2" :no-spec? true})
+            holds (vec (for [[tid pid] [["h3" "posting-3"] ["h4" "posting-4"]
+                                        ["h5" "posting-5"] ["h7" "posting-7"]]]
+                         (do (exec! (str tid "-assess") {:op :jurisdiction/assess :subject pid})
+                             [pid (exec! (str tid "-publish") {:op :posting/publish :subject pid})])))
+            double-publish (exec! "g1" {:op :posting/publish :subject "posting-1"})]
+        (into [{:posting (store/posting db "posting-2") :violations (violations-of no-spec)}]
+              (concat (for [[pid run] holds]
+                        {:posting (store/posting db pid) :violations (violations-of run)})
+                      [{:posting (store/posting db "posting-1") :violations (violations-of double-publish)
+                        :note "二重掲載の試行"}]))))))
 
 ;; -- post-run state -----------------------------------------------------------
 
@@ -87,15 +131,6 @@
 (def live-index (vec (filter #(and (:published? %) (not (:delisted? %))) all-postings)))
 (def delisted (vec (filter :delisted? all-postings)))
 (def ledger (store/ledger db))
-
-(defn- violations-of [run] (get-in run [:state :verdict :violations]))
-
-(def held
-  (into [{:posting (store/posting db "posting-2") :violations (violations-of no-spec-run)}]
-        (concat (for [[pid run] hold-runs]
-                  {:posting (store/posting db pid) :violations (violations-of run)})
-                [{:posting (store/posting db "posting-1") :violations (violations-of double-publish-run)
-                  :note "二重掲載の試行"}])))
 
 (defn ledger-line [{:keys [t op subject disposition basis]}]
   (cstr/join " · " [(name t) (str "op=" op) (str "subject=" subject)
@@ -195,10 +230,12 @@
 
     [:div {:id "results"}]
     [:p {:id "empty" :hidden true} "該当する求人はありません。"]
-    (into [:p [:span.meta "取下げ済み(インデックス外): "]]
-          (for [p delisted]
-            [:span.meta (:title p) " (" (:employer p) ") — 掲載後に充足し取下げ("
-             [:code (:delisting-number p)] ")。的確表示義務はこの「消える」側も含む。"]))
+    (if (seq delisted)
+      (into [:p [:span.meta "取下げ済み(インデックス外): "]]
+            (for [p delisted]
+              [:span.meta (:title p) " (" (:employer p) ") — 掲載後に充足し取下げ("
+               [:code (:delisting-number p)] ")。的確表示義務はこの「消える」側も含む。"]))
+      "")
 
     [:h2 "Governor transparency — 掲載を拒否した求人票"]
     [:p "Indeed 型アグリゲーターとの違いはここです: 掲載判断は LLM でも運営者の裁量でもなく、"

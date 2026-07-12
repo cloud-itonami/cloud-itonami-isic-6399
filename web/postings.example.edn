@@ -1,0 +1,51 @@
+;; Example operator posting file for `generate.cljs` (see
+;; docs/operator-quickstart.md). Copy to e.g. postings.edn, replace with
+;; your own postings, and run:
+;;   nbb --classpath "..." generate.cljs postings.edn
+;; Every posting is assessed and submitted for publication through the
+;; real actor at build time; the governor's holds appear on the page.
+;;
+;; Field notes:
+;;   :jurisdiction              ISO3 -- must exist in jobsearchops.facts/catalog
+;;                              (JPN/USA/GBR/DEU in R0), or the assess step is
+;;                              HARD-held (no-spec-basis) and nothing publishes.
+;;   :source-hourly-wage/:source-monthly-hours
+;;                              the source record's own ground truth; the
+;;                              governor recomputes wage x hours and holds a
+;;                              :displayed-compensation that differs.
+;;   :requires-source-consent?  true for postings aggregated from a source
+;;                              whose terms/law require republication consent;
+;;                              then :source-consent-verified? must be true.
+;;   :source-vacancy-closed?    true once the source has filled/closed the
+;;                              vacancy -- publishing is then HARD-held
+;;                              (的確表示義務).
+[{:id "own-1" :title "介護スタッフ(日勤)" :employer "さくら介護センター"
+  :source "employer-direct"
+  :source-hourly-wage 1400 :source-monthly-hours 160 :displayed-compensation 224000.0
+  :ad-content-discriminatory? false :source-vacancy-closed? false
+  :requires-source-consent? false :source-consent-verified? false
+  :published? false :delisted? false
+  :jurisdiction "JPN" :status :ingested}
+ {:id "own-2" :title "調理補助(パート)" :employer "みなと食堂"
+  :source "partner-feed"
+  :source-hourly-wage 1250 :source-monthly-hours 120 :displayed-compensation 150000.0
+  :ad-content-discriminatory? false :source-vacancy-closed? false
+  :requires-source-consent? true :source-consent-verified? true
+  :published? false :delisted? false
+  :jurisdiction "JPN" :status :ingested}
+ ;; will be HARD-held: the source already closed this vacancy (的確表示義務)
+ {:id "own-3" :title "倉庫作業(夜勤)" :employer "うみかぜ物流"
+  :source "employer-direct"
+  :source-hourly-wage 1600 :source-monthly-hours 160 :displayed-compensation 256000.0
+  :ad-content-discriminatory? false :source-vacancy-closed? true
+  :requires-source-consent? false :source-consent-verified? false
+  :published? false :delisted? false
+  :jurisdiction "JPN" :status :ingested}
+ ;; will be HARD-held: displayed pay (200000.0) != 1300 x 140 (182000.0)
+ {:id "own-4" :title "事務(時短)" :employer "ひかり商事"
+  :source "employer-direct"
+  :source-hourly-wage 1300 :source-monthly-hours 140 :displayed-compensation 200000.0
+  :ad-content-discriminatory? false :source-vacancy-closed? false
+  :requires-source-consent? false :source-consent-verified? false
+  :published? false :delisted? false
+  :jurisdiction "JPN" :status :ingested}]
