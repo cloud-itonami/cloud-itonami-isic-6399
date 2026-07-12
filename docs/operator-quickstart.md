@@ -83,7 +83,21 @@ visitors.
   and thereby leaves the index). If your org disables Actions, run the
   same generate/verify/commit trio from any scheduler.
 
-## 5. Where this goes next
+## 5. Running the full Indeed stack (this board + the placement desk)
+
+Pair this board with
+[`cloud-itonami-isic-7810`](https://github.com/cloud-itonami/cloud-itonami-isic-7810)
+(its own quickstart covers the private placement side). The seam is
+superproject ADR-2607131000: an application on your board becomes an
+`:application/refer` record (applicant's own consent required, live
+posting required, applicant REFERENCE only — no PII here), which a
+human carries into the desk's `:candidacy/intake` with the referral's
+record id in the patch. No store, governor or API is shared; the
+end-to-end story is the join of the two ledgers. Both public demos
+show the same record id (`JPN-REF-000000`) leaving one ledger and
+arriving in the other.
+
+## 6. Where this goes next
 
 - managed hosting, sponsored listings, compliance packages: see
   `docs/business-model.md` (pricing shapes, unit economics).
