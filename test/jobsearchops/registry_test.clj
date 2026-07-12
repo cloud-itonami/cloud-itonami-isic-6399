@@ -63,3 +63,23 @@
     (is (= 2 (count hist2)))
     (is (= "JPN-PUB-000000" (get-in hist2 [0 "record_id"])))
     (is (= "JPN-PUB-000001" (get-in hist2 [1 "record_id"])))))
+
+;; ----------------------------- register-correction -----------------------------
+
+(deftest correction-is-a-draft-not-a-real-correction
+  (let [result (r/register-correction "posting-1" "JPN" 0)]
+    (is (nil? (get-in result ["certificate" "proof"])))
+    (is (= (get-in result ["certificate" "issued_by_registry"]) false))
+    (is (= (get-in result ["certificate" "status"]) "draft-unsigned"))))
+
+(deftest correction-assigns-correction-number
+  (let [result (r/register-correction "posting-1" "JPN" 7)]
+    (is (= (get result "correction_number") "JPN-COR-000007"))
+    (is (= (get-in result ["record" "posting_id"]) "posting-1"))
+    (is (= (get-in result ["record" "kind"]) "correction-draft"))
+    (is (= (get-in result ["record" "immutable"]) true))))
+
+(deftest correction-validation-rules
+  (is (thrown? Exception (r/register-correction "" "JPN" 0)))
+  (is (thrown? Exception (r/register-correction "posting-1" "" 0)))
+  (is (thrown? Exception (r/register-correction "posting-1" "JPN" -1))))

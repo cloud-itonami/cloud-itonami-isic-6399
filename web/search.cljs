@@ -22,6 +22,9 @@
        " · <span class=\"chip\">" (esc (:source p)) "</span></div>"
        "<div class=\"pay\">" (esc (:pay p))
        " <span class=\"meta\">(" (esc (:wage p)) " — 求人元記録と独立再計算が一致)</span></div>"
+       (when (:correction p)
+         (str "<div class=\"meta\">訂正済 <span class=\"chip\">" (esc (:correction p))
+              "</span> — 求人元の変更を governed correction で反映(職安法5条の4)</div>"))
        "</div>"))
 
 (defn- matches? [p q jur src]

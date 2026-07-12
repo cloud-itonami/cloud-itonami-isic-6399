@@ -175,11 +175,19 @@
 
 (def high-stakes
   "Stakes grave enough to always require a human, even when clean.
-  Publishing a real posting into the public index and delisting a real
-  posting from it are the two real-world actuation events this actor
-  performs -- a two-member set, matching every sibling's own
-  dual-actuation shape."
-  #{:actuation/publish-posting :actuation/delist-posting})
+  Publishing a real posting into the public index, delisting a real
+  posting from it, and correcting a LIVE posting's public content
+  (職業安定法5条の4's correction duty) are the real-world actuation
+  events this actor performs."
+  #{:actuation/publish-posting :actuation/delist-posting :actuation/correct-posting})
+
+(def ^:private content-gated-ops
+  "Ops whose committed effect changes what the public index shows for a
+  posting -- a fresh publication and a correction of a live posting
+  both pass the SAME content gates (stale vacancy / discriminatory ad /
+  pay recompute / source consent): a correction may not introduce what
+  a publication would have been refused for."
+  #{:posting/publish :posting/correct})
 
 ;; ----------------------------- checks -----------------------------
 
@@ -189,7 +197,7 @@
   invent a jurisdiction's job-advertising/database-right
   requirements."
   [{:keys [op]} proposal]
-  (when (contains? #{:jurisdiction/assess :posting/publish :posting/delist} op)
+  (when (contains? #{:jurisdiction/assess :posting/publish :posting/delist :posting/correct} op)
     (let [value (:value proposal)]
       (when (or (empty? (:cites proposal))
                 (and (contains? value :spec-basis) (nil? (:spec-basis value))))
@@ -202,7 +210,7 @@
   actually be satisfied -- do not trust the advisor's self-reported
   confidence alone."
   [{:keys [op subject]} st]
-  (when (contains? #{:posting/publish :posting/delist} op)
+  (when (contains? #{:posting/publish :posting/delist :posting/correct} op)
     (let [p (store/posting st subject)
           assessment (store/assessment-of st subject)]
       (when-not (and assessment
@@ -219,7 +227,7 @@
   published). Evaluated UNCONDITIONALLY (every publication needs its
   own source-vacancy currency checked)."
   [{:keys [op subject]} st]
-  (when (= op :posting/publish)
+  (when (contains? content-gated-ops op)
     (let [p (store/posting st subject)]
       (when (true? (:source-vacancy-closed? p))
         [{:rule :stale-vacancy
@@ -232,7 +240,7 @@
   advertisement content. Evaluated UNCONDITIONALLY (every publication
   needs its own ad content checked)."
   [{:keys [op subject]} st]
-  (when (= op :posting/publish)
+  (when (contains? content-gated-ops op)
     (let [p (store/posting st subject)]
       (when (true? (:ad-content-discriminatory? p))
         [{:rule :ad-content-discriminatory
@@ -247,7 +255,7 @@
   of the same discipline every sibling actor's own cost/total-matching
   check establishes."
   [{:keys [op subject]} st]
-  (when (= op :posting/publish)
+  (when (contains? content-gated-ops op)
     (let [p (store/posting st subject)]
       (when-not (registry/displayed-compensation-matches-claim? p)
         [{:rule :displayed-compensation-mismatch
@@ -262,7 +270,7 @@
   `:requires-source-consent?` ground truth (not every posting is
   aggregated from a consent-requiring third-party source)."
   [{:keys [op subject]} st]
-  (when (= op :posting/publish)
+  (when (contains? content-gated-ops op)
     (let [p (store/posting st subject)]
       (when (and (true? (:requires-source-consent? p))
                  (not (true? (:source-consent-verified? p))))
@@ -277,6 +285,20 @@
     (when (store/posting-already-published? st subject)
       [{:rule :already-published
         :detail (str subject " は既に掲載済み")}])))
+
+(defn- posting-not-live-violations
+  "For `:posting/correct`, the posting must be LIVE (published and not
+  delisted): 職業安定法5条の4's correction duty is about information
+  the public can currently see -- an unpublished draft is corrected by
+  plain ingest, and a delisted posting has nothing public to correct.
+  Off the dedicated `:published?`/`:delisted?` booleans, same
+  discipline as the double-actuation guards."
+  [{:keys [op subject]} st]
+  (when (= op :posting/correct)
+    (let [p (store/posting st subject)]
+      (when-not (and (:published? p) (not (:delisted? p)))
+        [{:rule :posting-not-live
+          :detail (str subject " は公開中でない(未掲載または取下げ済み) -- 訂正対象が存在しない")}]))))
 
 (defn- already-delisted-violations
   "For `:posting/delist`, refuses to delist the SAME posting twice,
@@ -299,6 +321,7 @@
                            (ad-content-discriminatory-violations request st)
                            (displayed-compensation-mismatch-violations request st)
                            (source-consent-unverified-violations request st)
+                           (posting-not-live-violations request st)
                            (already-published-violations request st)
                            (already-delisted-violations request st)))
         conf (:confidence proposal 0.0)

@@ -87,3 +87,18 @@
                                  :published? false :delisted? false
                                  :jurisdiction "JPN" :status :ingested}})
     (is (= "t" (:title (store/posting s "x"))))))
+
+(deftest correction-parity
+  (doseq [[label s] (backends)]
+    (testing label
+      (store/commit-record! s {:effect :posting/mark-published :path ["posting-1"]})
+      (testing "correction drafts a record, stamps the posting, advances the sequence"
+        (store/commit-record! s {:effect :posting/mark-corrected :path ["posting-1"]})
+        (is (= "JPN-COR-000000" (get (first (store/correction-history s)) "record_id")))
+        (is (= "correction-draft" (get (first (store/correction-history s)) "kind")))
+        (is (= "JPN-COR-000000" (:correction-number (store/posting s "posting-1"))))
+        (is (= 1 (store/next-correction-sequence s "JPN"))))
+      (testing "a posting may be corrected more than once (no double guard)"
+        (store/commit-record! s {:effect :posting/mark-corrected :path ["posting-1"]})
+        (is (= 2 (count (store/correction-history s))))
+        (is (= "JPN-COR-000001" (:correction-number (store/posting s "posting-1"))))))))

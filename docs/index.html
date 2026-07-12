@@ -122,6 +122,8 @@ committed · op=:posting/publish · subject=posting-6 · disposition=commit · b
 committed · op=:jurisdiction/assess · subject=posting-8 · disposition=commit · basis=[&quot;職業安定法5条の4 (求人等に関する情報の的確な表示) 及び 男女雇用機会均等法5条・労働施策総合推進法9条 (募集・採用における差別禁止)&quot; &quot;https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/shokugyoushoukai/&quot;]
 committed · op=:posting/publish · subject=posting-8 · disposition=commit · basis=[&quot;posting-8&quot;]
 committed · op=:posting/delist · subject=posting-1 · disposition=commit · basis=[&quot;posting-1&quot;]
+committed · op=:posting/ingest · subject=posting-6 · disposition=commit · basis=[:id :source-hourly-wage :displayed-compensation]
+committed · op=:posting/correct · subject=posting-6 · disposition=commit · basis=[&quot;posting-6&quot;]
 governor-hold · op=:jurisdiction/assess · subject=posting-2 · disposition=hold · basis=[:no-spec-basis]
 committed · op=:jurisdiction/assess · subject=posting-3 · disposition=commit · basis=[&quot;職業安定法5条の4 (求人等に関する情報の的確な表示) 及び 男女雇用機会均等法5条・労働施策総合推進法9条 (募集・採用における差別禁止)&quot; &quot;https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/shokugyoushoukai/&quot;]
 governor-hold · op=:posting/publish · subject=posting-3 · disposition=hold · basis=[:displayed-compensation-mismatch]
@@ -143,7 +145,7 @@ governor-hold · op=:posting/publish · subject=posting-1 · disposition=hold ·
     <footer>
       <p>OSS (AGPL-3.0-or-later)。fork して自分の求人ポータルとして運営できます — <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md">business model</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md">operator guide</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md">architecture ADR</a> · 姉妹デモ: <a href="https://cloud-itonami.github.io/cloud-itonami-isic-6310/">Talent Board (isic-6310)</a>。このページは <code>web/generate.cljs</code> (nbb) が実 actor を実行して生成し、検索は <code>search.cljs</code> (scittle = ブラウザ内 ClojureScript) が実行しています。</p>
     </footer>
-    <script type="application/json" id="postings-data">[{"id":"posting-6","title":"Line Cook","employer":"Chuo Kitchen","jurisdiction":"JPN","source":"partner-feed","publication":"JPN-PUB-000001","pay":"¥240,000/月","wage":"時給 ¥1,500 × 160h"},{"id":"posting-8","title":"Forklift Operator","employer":"Yama Warehouse","jurisdiction":"JPN","source":"employer-direct","publication":"JPN-PUB-000002","pay":"¥272,000/月","wage":"時給 ¥1,700 × 160h"}]</script>
+    <script type="application/json" id="postings-data">[{"employer":"Chuo Kitchen","jurisdiction":"JPN","publication":"JPN-PUB-000001","source":"partner-feed","title":"Line Cook","correction":"JPN-COR-000000","id":"posting-6","pay":"¥248,000/月","wage":"時給 ¥1,550 × 160h"},{"employer":"Yama Warehouse","jurisdiction":"JPN","publication":"JPN-PUB-000002","source":"employer-direct","title":"Forklift Operator","correction":null,"id":"posting-8","pay":"¥272,000/月","wage":"時給 ¥1,700 × 160h"}]</script>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"></script>
     <script type="application/x-scittle" src="search.cljs"></script>
   </body>

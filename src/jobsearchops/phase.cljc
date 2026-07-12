@@ -26,12 +26,12 @@
   posting itself.")
 
 (def read-ops  #{})
-(def write-ops #{:posting/ingest :jurisdiction/assess :posting/publish :posting/delist})
+(def write-ops #{:posting/ingest :jurisdiction/assess :posting/publish :posting/delist :posting/correct})
 
-;; NOTE the invariant: `:posting/publish`/`:posting/delist` are
-;; members of `write-ops` (governor-gated like any write) but are
-;; NEVER members of any phase's `:auto` set below. Do not add them
-;; there.
+;; NOTE the invariant: `:posting/publish`/`:posting/delist`/
+;; `:posting/correct` are members of `write-ops` (governor-gated like
+;; any write) but are NEVER members of any phase's `:auto` set below.
+;; Do not add them there.
 (def phases
   "phase -> {:label .. :writes <ops allowed to write> :auto <ops allowed to
   auto-commit when governor-clean>}."

@@ -111,5 +111,33 @@
     {"record" record "delisting_number" delisting-number
      "certificate" (unsigned-certificate "PostingDelisting" delisting-number delisting-number)}))
 
+(defn register-correction
+  "Validate + construct the POSTING-CORRECTION registration DRAFT --
+  the portal operator's own act of updating a LIVE posting's public
+  content (職業安定法5条の4: the operator corrects posted information
+  on the 求人者's request / when it is no longer accurate). Unlike
+  publication/delisting there is no double-actuation guard: a posting
+  may legitimately be corrected more than once; what gates it is
+  `jobsearchops.governor`'s posting-not-live guard plus the SAME
+  content checks a fresh publication passes (a correction may not
+  introduce a stale vacancy, a pay mismatch, unconsented content or a
+  discriminatory ad). Pure function -- builds the RECORD an operator
+  would keep."
+  [posting-id jurisdiction sequence]
+  (when-not (and posting-id (not= posting-id ""))
+    (throw (ex-info "correction: posting_id required" {})))
+  (when-not (and jurisdiction (not= jurisdiction ""))
+    (throw (ex-info "correction: jurisdiction required" {})))
+  (when (< sequence 0)
+    (throw (ex-info "correction: sequence must be >= 0" {})))
+  (let [correction-number (str (str/upper-case jurisdiction) "-COR-" (zero-pad sequence 6))
+        record {"record_id" correction-number
+                "kind" "correction-draft"
+                "posting_id" posting-id
+                "jurisdiction" jurisdiction
+                "immutable" true}]
+    {"record" record "correction_number" correction-number
+     "certificate" (unsigned-certificate "PostingCorrection" correction-number correction-number)}))
+
 (defn append [history result]
   (conj (vec history) (get result "record")))

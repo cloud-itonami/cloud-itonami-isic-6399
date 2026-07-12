@@ -33,3 +33,12 @@
 
 (deftest gate-holds-a-write-disabled-in-this-phase
   (is (= :hold (:disposition (phase/gate 0 {:op :posting/ingest} :commit)))))
+
+(deftest posting-correct-never-auto-at-any-phase
+  (testing "structural invariant: no phase, now or in the future entries, auto-commits a real posting correction"
+    (doseq [[n {:keys [auto]}] phase/phases]
+      (is (not (contains? auto :posting/correct))
+          (str "phase " n " must not auto-commit :posting/correct")))))
+
+(deftest gate-escalates-a-clean-correction
+  (is (= :escalate (:disposition (phase/gate 3 {:op :posting/correct} :commit)))))

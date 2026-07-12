@@ -69,6 +69,18 @@
     (println (exec-op actor "t7" {:op :posting/publish :subject "posting-6"} operator))
     (println (approve! actor "t7"))
 
+    (println "== posting/ingest posting-6 wage update (source truth changed; ingest normalizes it) ==")
+    (println (exec-op actor "t7b" {:op :posting/ingest :subject "posting-6"
+                                   :patch {:id "posting-6" :source-hourly-wage 1550
+                                           :displayed-compensation 248000.0}} operator))
+
+    (println "== posting/correct posting-6 (訂正 -- 職業安定法5条の4; escalates -- human approves) ==")
+    (println (exec-op actor "t7c" {:op :posting/correct :subject "posting-6"} operator))
+    (println (approve! actor "t7c"))
+
+    (println "== posting/correct posting-3 (not live -> HARD hold :posting-not-live) ==")
+    (println (exec-op actor "t7d" {:op :posting/correct :subject "posting-3"} operator))
+
     (println "== jurisdiction/assess posting-2 (no spec-basis -> HARD hold) ==")
     (println (exec-op actor "t8" {:op :jurisdiction/assess :subject "posting-2" :no-spec? true} operator))
 
@@ -113,4 +125,7 @@
     (doseq [r (store/publication-history db)] (println r))
 
     (println "== draft delisting records ==")
-    (doseq [r (store/delisting-history db)] (println r))))
+    (doseq [r (store/delisting-history db)] (println r))
+
+    (println "== draft correction records ==")
+    (doseq [r (store/correction-history db)] (println r))))

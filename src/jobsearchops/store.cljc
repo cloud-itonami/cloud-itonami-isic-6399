@@ -44,8 +44,10 @@
   (ledger [s])
   (publication-history [s] "the append-only posting-publication history (jobsearchops.registry drafts)")
   (delisting-history [s] "the append-only posting-delisting history (jobsearchops.registry drafts)")
+  (correction-history [s] "the append-only posting-correction history (jobsearchops.registry drafts)")
   (next-publication-sequence [s jurisdiction] "next publication-number sequence for a jurisdiction")
   (next-delisting-sequence [s jurisdiction] "next delisting-number sequence for a jurisdiction")
+  (next-correction-sequence [s jurisdiction] "next correction-number sequence for a jurisdiction")
   (posting-already-published? [s posting-id] "has this posting already been published?")
   (posting-already-delisted? [s posting-id] "has this posting already been delisted?")
   (commit-record! [s record] "apply a committed op's record to the SSoT")
@@ -136,6 +138,19 @@
      :posting-patch {:delisted? true
                      :delisting-number (get result "delisting_number")}}))
 
+(defn- correct-posting!
+  "Backend-agnostic `:posting/mark-corrected` -- looks up the posting
+  via the protocol and drafts the correction record, and returns
+  {:result .. :posting-patch ..} for the caller to persist. The patch
+  stamps the LATEST correction number; the full history stays in
+  `correction-history` (a posting may be corrected more than once)."
+  [s posting-id]
+  (let [p (posting s posting-id)
+        seq-n (next-correction-sequence s (:jurisdiction p))
+        result (registry/register-correction posting-id (:jurisdiction p) seq-n)]
+    {:result result
+     :posting-patch {:correction-number (get result "correction_number")}}))
+
 ;; ----------------------------- MemStore (default) -----------------------------
 
 (defrecord MemStore [a]
@@ -146,8 +161,10 @@
   (ledger [_] (:ledger @a))
   (publication-history [_] (:publication-records @a))
   (delisting-history [_] (:delisting-records @a))
+  (correction-history [_] (:correction-records @a))
   (next-publication-sequence [_ jurisdiction] (get-in @a [:publication-sequences jurisdiction] 0))
   (next-delisting-sequence [_ jurisdiction] (get-in @a [:delisting-sequences jurisdiction] 0))
+  (next-correction-sequence [_ jurisdiction] (get-in @a [:correction-sequences jurisdiction] 0))
   (posting-already-published? [_ posting-id] (boolean (get-in @a [:postings posting-id :published?])))
   (posting-already-delisted? [_ posting-id] (boolean (get-in @a [:postings posting-id :delisted?])))
   (commit-record! [s {:keys [effect path value payload]}]
@@ -179,6 +196,17 @@
                        (update-in [:postings posting-id] merge posting-patch)
                        (update :delisting-records registry/append result))))
         result)
+
+      :posting/mark-corrected
+      (let [posting-id (first path)
+            {:keys [result posting-patch]} (correct-posting! s posting-id)
+            jurisdiction (:jurisdiction (posting s posting-id))]
+        (swap! a (fn [state]
+                   (-> state
+                       (update-in [:correction-sequences jurisdiction] (fnil inc 0))
+                       (update-in [:postings posting-id] merge posting-patch)
+                       (update :correction-records registry/append result))))
+        result)
       nil)
     s)
   (append-ledger! [_ fact] (swap! a update :ledger conj fact) fact)
@@ -191,7 +219,8 @@
   (->MemStore (atom (assoc (demo-data)
                            :assessments {}
                            :ledger [] :publication-sequences {} :publication-records []
-                           :delisting-sequences {} :delisting-records []))))
+                           :delisting-sequences {} :delisting-records []
+                           :correction-sequences {} :correction-records []))))
 
 ;; ----------------------------- DatomicStore (langchain.db) -----------------------------
 
@@ -206,8 +235,10 @@
    :ledger/seq                       {:db/unique :db.unique/identity}
    :publication-record/seq           {:db/unique :db.unique/identity}
    :delisting-record/seq             {:db/unique :db.unique/identity}
+   :correction-record/seq            {:db/unique :db.unique/identity}
    :publication-sequence/jurisdiction {:db/unique :db.unique/identity}
-   :delisting-sequence/jurisdiction   {:db/unique :db.unique/identity}})
+   :delisting-sequence/jurisdiction   {:db/unique :db.unique/identity}
+   :correction-sequence/jurisdiction  {:db/unique :db.unique/identity}})
 
 (defn- enc [v] (pr-str v))
 (defn- dec* [s] (when s (edn/read-string s)))
@@ -217,7 +248,8 @@
                             ad-content-discriminatory? source-vacancy-closed?
                             requires-source-consent? source-consent-verified?
                             published? delisted?
-                            jurisdiction status publication-number delisting-number]}]
+                            jurisdiction status publication-number delisting-number
+                            correction-number]}]
   (cond-> {:posting/id id}
     title                                    (assoc :posting/title title)
     employer                                 (assoc :posting/employer employer)
@@ -234,7 +266,8 @@
     jurisdiction                             (assoc :posting/jurisdiction jurisdiction)
     status                                   (assoc :posting/status status)
     publication-number                       (assoc :posting/publication-number publication-number)
-    delisting-number                         (assoc :posting/delisting-number delisting-number)))
+    delisting-number                         (assoc :posting/delisting-number delisting-number)
+    correction-number                        (assoc :posting/correction-number correction-number)))
 
 (def ^:private posting-pull
   [:posting/id :posting/title :posting/employer :posting/source
@@ -242,7 +275,8 @@
    :posting/ad-content-discriminatory? :posting/source-vacancy-closed?
    :posting/requires-source-consent? :posting/source-consent-verified?
    :posting/published? :posting/delisted?
-   :posting/jurisdiction :posting/status :posting/publication-number :posting/delisting-number])
+   :posting/jurisdiction :posting/status :posting/publication-number :posting/delisting-number
+   :posting/correction-number])
 
 (defn- pull->posting [m]
   (when (:posting/id m)
@@ -258,7 +292,8 @@
      :published? (boolean (:posting/published? m)) :delisted? (boolean (:posting/delisted? m))
      :jurisdiction (:posting/jurisdiction m) :status (:posting/status m)
      :publication-number (:posting/publication-number m)
-     :delisting-number (:posting/delisting-number m)}))
+     :delisting-number (:posting/delisting-number m)
+     :correction-number (:posting/correction-number m)}))
 
 (defrecord DatomicStore [conn]
   Store
@@ -284,6 +319,10 @@
     (->> (d/q '[:find ?s ?r :where [?e :delisting-record/seq ?s] [?e :delisting-record/record ?r]] (d/db conn))
          (sort-by first)
          (mapv (comp dec* second))))
+  (correction-history [_]
+    (->> (d/q '[:find ?s ?r :where [?e :correction-record/seq ?s] [?e :correction-record/record ?r]] (d/db conn))
+         (sort-by first)
+         (mapv (comp dec* second))))
   (next-publication-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :publication-sequence/jurisdiction ?j] [?e :publication-sequence/next ?n]]
@@ -292,6 +331,11 @@
   (next-delisting-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :delisting-sequence/jurisdiction ?j] [?e :delisting-sequence/next ?n]]
+            (d/db conn) jurisdiction)
+        0))
+  (next-correction-sequence [_ jurisdiction]
+    (or (d/q '[:find ?n . :in $ ?j
+              :where [?e :correction-sequence/jurisdiction ?j] [?e :correction-sequence/next ?n]]
             (d/db conn) jurisdiction)
         0))
   (posting-already-published? [s posting-id]
@@ -326,6 +370,17 @@
                      [(posting->tx (assoc posting-patch :id posting-id))
                       {:delisting-sequence/jurisdiction jurisdiction :delisting-sequence/next next-n}
                       {:delisting-record/seq (count (delisting-history s)) :delisting-record/record (enc (get result "record"))}])
+        result)
+
+      :posting/mark-corrected
+      (let [posting-id (first path)
+            {:keys [result posting-patch]} (correct-posting! s posting-id)
+            jurisdiction (:jurisdiction (posting s posting-id))
+            next-n (inc (next-correction-sequence s jurisdiction))]
+        (d/transact! conn
+                     [(posting->tx (assoc posting-patch :id posting-id))
+                      {:correction-sequence/jurisdiction jurisdiction :correction-sequence/next next-n}
+                      {:correction-record/seq (count (correction-history s)) :correction-record/record (enc (get result "record"))}])
         result)
       nil)
     s)

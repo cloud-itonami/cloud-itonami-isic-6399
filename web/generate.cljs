@@ -110,6 +110,15 @@
         (exec! (str tid "-publish") {:op :posting/publish :subject pid}))
       (exec! "a1-delist" {:op :posting/delist :subject "posting-1"})
 
+      ;; the correction lifecycle (訂正 -- ADR-0002): posting-6's source
+      ;; wage changed; ingest normalizes the new ground truth, then the
+      ;; governed correct act updates the public surface and stamps the
+      ;; correction record the card displays.
+      (exec! "c6-ingest" {:op :posting/ingest :subject "posting-6"
+                          :patch {:id "posting-6" :source-hourly-wage 1550
+                                  :displayed-compensation 248000.0}})
+      (exec! "c6-correct" {:op :posting/correct :subject "posting-6"})
+
       ;; the HARD-hold attempts, one per governor check (posting-2's
       ;; spec-basis hold happens at assess; the rest assess cleanly, then
       ;; fail publish), plus the double-actuation guard on posting-1.
@@ -200,6 +209,7 @@
   {:id (:id p) :title (:title p) :employer (:employer p)
    :jurisdiction (:jurisdiction p) :source (:source p)
    :publication (:publication-number p)
+   :correction (:correction-number p)
    :pay (fmt-yen (:displayed-compensation p))
    :wage (str "時給 ¥" (.format yen (:source-hourly-wage p))
               " × " (:source-monthly-hours p) "h")})

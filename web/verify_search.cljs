@@ -94,4 +94,10 @@
 (assert! (.includes html "op=:posting/delist") "ledger has the delist fact")
 (assert! (.includes html "basis=[:stale-vacancy]") "ledger has the stale-vacancy hold fact")
 
+;; the correction lifecycle (ADR-0002): posting-6 was corrected after a
+;; source wage change -- record on the card, fact in the ledger
+(assert! (.includes json-block "JPN-COR-000000") "corrected posting-6 carries its correction number")
+(assert! (.includes json-block "248,000") "posting-6's pay reflects the corrected source truth")
+(assert! (.includes html "op=:posting/correct") "ledger has the correct fact")
+
 (println "verify_search: all assertions passed")

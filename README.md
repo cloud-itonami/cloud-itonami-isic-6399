@@ -223,14 +223,14 @@ in its Offer:
 | Posting ingest + per-jurisdiction evidence checklisting, HARD-gated on an official spec-basis citation (`:posting/ingest`/`:jurisdiction/assess`) | Real source crawling/feed integration, real search-index/ranking engine, candidate matching or placement (see `jobsearchops.facts`'s docstring and `cloud-itonami-isic-7810`) |
 | Posting publication, HARD-gated on full evidence, a current (non-closed) source vacancy, non-discriminatory ad content, a matching displayed pay and (when applicable) a verified source consent, plus a double-publication guard (`:posting/publish`) | |
 | Posting delisting, HARD-gated on full evidence, plus a double-delisting guard (`:posting/delist`) | |
+| Posting correction (訂正 — 職業安定法5条の4's other half; ADR-0002), HARD-gated on the SAME content gates as a publication plus a posting-not-live guard; multiple corrections per posting, each with its own record (`:posting/correct`) | |
 | Immutable audit ledger for every ingest/assessment/publication/delisting decision | |
 
-Extending coverage is additive: add the next gate (e.g. a
-refresh-cycle staleness re-verification for postings that stay
-published) as its own governed op with its own HARD checks and tests,
-following the SAME "an independent governor re-verifies against the
-actor's own records before any real-world act" pattern this repo's
-flagship ops already establish.
+Extending coverage is additive — `:posting/correct` (ADR-0002) is the
+first such extension, added as its own governed op with its own HARD
+checks and tests, following the SAME "an independent governor
+re-verifies against the actor's own records before any real-world act"
+pattern this repo's flagship ops establish.
 
 ## Jurisdiction coverage (honest)
 

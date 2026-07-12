@@ -129,6 +129,33 @@
      :stake      :actuation/delist-posting
      :confidence (if p 0.9 0.3)}))
 
+(defn- propose-correction
+  "Draft the actual POSTING-CORRECTION action -- updating a LIVE
+  posting's public content after its source record changed
+  (職業安定法5条の4: keep posted information accurate; correct on the
+  求人者's request). The corrected field values are already in the
+  Store (plain `:posting/ingest` normalization); this act is the
+  governed step that changes what the PUBLIC sees and stamps the
+  correction record. ALWAYS `:stake :actuation/correct-posting`; the
+  governor re-runs the same content gates a fresh publication passes.
+  See README `Actuation`."
+  [db {:keys [subject]}]
+  (let [p (store/posting db subject)
+        live? (and p (:published? p) (not (:delisted? p)))
+        pay-ok? (and p (registry/displayed-compensation-matches-claim? p))]
+    {:summary    (str subject " 訂正提案"
+                      (when p (str " (" (:title p) " / " (:employer p) ")")))
+     :rationale  (if p
+                   (str "live?=" live?
+                        " displayed=" (:displayed-compensation p)
+                        " independent-recompute=" (registry/compute-displayed-compensation p))
+                   "postingが見つかりません")
+     :cites      (if p [subject] [])
+     :effect     :posting/mark-corrected
+     :value      {:posting-id subject}
+     :stake      :actuation/correct-posting
+     :confidence (if (and live? pay-ok?) 0.9 0.3)}))
+
 (defn infer
   "Route a request to the right proposal generator.
   request: {:op kw :subject id ...op-specific...}"
@@ -138,6 +165,7 @@
     :jurisdiction/assess  (assess-jurisdiction db request)
     :posting/publish      (propose-publication db request)
     :posting/delist       (propose-delisting db request)
+    :posting/correct      (propose-correction db request)
     {:summary "未対応の操作" :rationale (str op) :cites []
      :effect :noop :stake nil :confidence 0.0}))
 
@@ -157,8 +185,8 @@
        "キー: :summary(人向けドラフト) :rationale(根拠/必ず事実から) "
        ":cites(使った事実キーのベクタ) "
        ":effect(:posting/upsert|:assessment/set|:posting/mark-published|"
-       ":posting/mark-delisted) "
-       ":stake(:actuation/publish-posting か :actuation/delist-posting か nil) :confidence(0..1)。\n"
+       ":posting/mark-delisted|:posting/mark-corrected) "
+       ":stake(:actuation/publish-posting か :actuation/delist-posting か :actuation/correct-posting か nil) :confidence(0..1)。\n"
        "重要: 登録されていない法域の要件を絶対に創作してはいけません。"
        "spec-basisが無い場合は :cites を空にし confidence を上げないこと。"
        "求人元の募集終了状況・表示賃金の正確性・転載許諾の確認状況を偽って報告してはいけません。"))
