@@ -38,8 +38,10 @@ jobs:
         run: npm install nbb
       - name: regenerate through the real actor
         working-directory: cloud-itonami/cloud-itonami-isic-6399/web
+        # npx resolves the workspace-root node_modules regardless of the
+        # checkout depth (which differs from the monorepo layout here).
         run: |
-          ../../../../node_modules/.bin/nbb \
+          npx nbb \
             --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
             generate.cljs $( [ -f postings.edn ] && echo postings.edn )
       - name: verify (headless harness)
@@ -51,7 +53,7 @@ jobs:
           if [ -f postings.edn ]; then
             grep -q '監査台帳' ../docs/index.html && echo "operator board sanity ok"
           else
-            ../../../../node_modules/.bin/nbb verify_search.cljs
+            npx nbb verify_search.cljs
           fi
       - name: commit when changed
         working-directory: cloud-itonami/cloud-itonami-isic-6399
