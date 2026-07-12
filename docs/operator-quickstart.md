@@ -32,6 +32,17 @@ $EDITOR postings.edn        # your own postings; field notes in the example file
 ```
 
 Record shape and semantics are documented in `postings.example.edn`.
+Before attesting `:ad-content-discriminatory?`, run the decision-support
+screener over your postings — it surfaces suspect phrases WITH the
+statute to check them against, and is deliberately not a gate (you
+decide; the governor enforces your attestation):
+
+```clojure
+(require '[jobsearchops.screen :as screen])
+(screen/screen-posting {:id "own-1" :title "..." :employer "..."})
+;; => {:suspects [{:category :age :phrase "35歳未満" :basis "労働施策総合推進法9条 / ADEA §4(e)"}] ...}
+```
+
 Jurisdictions must exist in `jobsearchops.facts/catalog`
 (JPN/USA/GBR/DEU/FRA/KOR seeded) — extending the catalog is one map
 entry **citing a real official source** (see the README's jurisdiction-coverage section; never fabricate
