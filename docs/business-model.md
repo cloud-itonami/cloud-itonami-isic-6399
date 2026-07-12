@@ -59,6 +59,11 @@ both closed job-board SaaS and click-optimized aggregators.
    checklists and ledger are the supporting record.
 4. **itonami.cloud certification** — listed operators get leads and may run
    managed tenants (same trust ladder as every cloud-itonami venture).
+5. **Placement handoff (optional expansion)** — an application on your
+   board becomes a placement-desk candidacy via a HUMAN-CARRIED
+   referral draft toward `cloud-itonami-isic-7810`, never a
+   cross-actor call (superproject ADR-2607131000: separate governance
+   domains, no PII in the public actor's store).
 
 ## Revenue
 
