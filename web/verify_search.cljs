@@ -94,6 +94,13 @@
 (assert! (.includes html "op=:posting/delist") "ledger has the delist fact")
 (assert! (.includes html "basis=[:stale-vacancy]") "ledger has the stale-vacancy hold fact")
 
+;; the referral handoff (ADR-2607131000): consented referral recorded,
+;; consent-missing attempt HARD-held, applicant PII absent
+(assert! (.includes html "JPN-REF-000000") "referral record on the page")
+(assert! (.includes html "applicant-consent-missing") "consent-missing hold in transparency table")
+(assert! (.includes html "cloud-itonami-isic-7810") "handoff names the placement desk")
+(assert! (.includes html "op=:application/refer") "ledger has the referral facts")
+
 ;; the correction lifecycle (ADR-0002): posting-6 was corrected after a
 ;; source wage change -- record on the card, fact in the ledger
 (assert! (.includes json-block "JPN-COR-000000") "corrected posting-6 carries its correction number")

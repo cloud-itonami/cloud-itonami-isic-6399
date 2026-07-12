@@ -110,8 +110,24 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
           </td>
           <td>posting-1 は既に掲載済み</td>
         </tr>
+        <tr>
+          <td><strong>Line Cook</strong><br><span class="meta">Chuo Kitchen · JPN · posting-6 · 本人同意なし referral の試行</span></td>
+          <td>
+            <span>
+              <span><span class="badge hold">applicant-consent-missing</span> </span>
+            </span>
+          </td>
+          <td>応募者本人の紹介同意が無い -- referral は作成できない</td>
+        </tr>
       </tbody>
     </table>
+    <div>
+      <h2>紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)</h2>
+      <p>ボード上の求人への応募は、actor 間の直接呼び出しではなく人間が <a href="/cloud-itonami-isic-7810/">Placement Desk (isic-7810)</a> へ運ぶ referral 記録になります。応募者本人の同意なしには作成できず、記録が持つのは応募者への参照のみ(PII 本体はこの公開 actor の store に入りません)。</p>
+      <ul>
+        <li><code>JPN-REF-000000</code> → posting-6 (applicant: applicant-ref-001) → 搬送先 cloud-itonami-isic-7810</li>
+      </ul>
+    </div>
     <h2>監査台帳 — 上の全実行が実際に書いた追記専用レコード</h2>
     <p>掲載・取下げ・拒否のすべてが不変の台帳に残ります(的確表示義務コンプライアンスの証跡)。以下はページ生成時の実 actor 実行が書いた事実そのものです。</p>
     <pre>committed · op=:posting/ingest · subject=posting-8 · disposition=commit · basis=[:published? :employer :source-vacancy-closed? :delisted? :jurisdiction :source :requires-source-consent? :title :ad-content-discriminatory? :status :id :displayed-compensation :source-monthly-hours :source-consent-verified? :source-hourly-wage]
@@ -124,6 +140,7 @@ committed · op=:posting/publish · subject=posting-8 · disposition=commit · b
 committed · op=:posting/delist · subject=posting-1 · disposition=commit · basis=[&quot;posting-1&quot;]
 committed · op=:posting/ingest · subject=posting-6 · disposition=commit · basis=[:id :source-hourly-wage :displayed-compensation]
 committed · op=:posting/correct · subject=posting-6 · disposition=commit · basis=[&quot;posting-6&quot;]
+committed · op=:application/refer · subject=posting-6 · disposition=commit · basis=[&quot;posting-6&quot;]
 governor-hold · op=:jurisdiction/assess · subject=posting-2 · disposition=hold · basis=[:no-spec-basis]
 committed · op=:jurisdiction/assess · subject=posting-3 · disposition=commit · basis=[&quot;職業安定法5条の4 (求人等に関する情報の的確な表示) 及び 男女雇用機会均等法5条・労働施策総合推進法9条 (募集・採用における差別禁止)&quot; &quot;https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/shokugyoushoukai/&quot;]
 governor-hold · op=:posting/publish · subject=posting-3 · disposition=hold · basis=[:displayed-compensation-mismatch]
@@ -133,7 +150,8 @@ committed · op=:jurisdiction/assess · subject=posting-5 · disposition=commit 
 governor-hold · op=:posting/publish · subject=posting-5 · disposition=hold · basis=[:source-consent-unverified]
 committed · op=:jurisdiction/assess · subject=posting-7 · disposition=commit · basis=[&quot;職業安定法5条の4 (求人等に関する情報の的確な表示) 及び 男女雇用機会均等法5条・労働施策総合推進法9条 (募集・採用における差別禁止)&quot; &quot;https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/shokugyoushoukai/&quot;]
 governor-hold · op=:posting/publish · subject=posting-7 · disposition=hold · basis=[:stale-vacancy]
-governor-hold · op=:posting/publish · subject=posting-1 · disposition=hold · basis=[:already-published]</pre>
+governor-hold · op=:posting/publish · subject=posting-1 · disposition=hold · basis=[:already-published]
+governor-hold · op=:application/refer · subject=posting-6 · disposition=hold · basis=[:applicant-consent-missing]</pre>
     <h2>この検索インデックスが保証すること</h2>
     <ul>
       <li>求人元が募集終了した求人は載らない(<strong>的確表示義務</strong> — 職業安定法5条の4、令和4年改正)</li>

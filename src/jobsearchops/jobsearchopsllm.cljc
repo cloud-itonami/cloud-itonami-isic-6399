@@ -156,6 +156,26 @@
      :stake      :actuation/correct-posting
      :confidence (if (and live? pay-ok?) 0.9 0.3)}))
 
+(defn- propose-referral
+  "Draft the APPLICATION-REFERRAL record (ADR-2607131000) -- the paper
+  a human agency operator carries into cloud-itonami-isic-7810's
+  candidacy intake. Not an actuation (nothing public changes); the
+  governor still requires a live posting and the applicant's own
+  consent flag, and the phase gate routes every referral to a human
+  (the carry IS the human act)."
+  [db {:keys [subject applicant-ref applicant-consent?]}]
+  (let [p (store/posting db subject)
+        live? (and p (:published? p) (not (:delisted? p)))]
+    {:summary    (str subject " への応募 referral 起票"
+                      (when p (str " (" (:title p) " / " (:employer p) ")")))
+     :rationale  (str "live?=" live? " consent?=" (boolean applicant-consent?)
+                      " applicant-ref=" (pr-str applicant-ref) " (参照のみ、PII本体は保持しない)")
+     :cites      (if p [subject] [])
+     :effect     :referral/record
+     :value      {:posting-id subject :applicant-ref applicant-ref}
+     :stake      nil
+     :confidence (if (and live? (true? applicant-consent?) (seq (str applicant-ref))) 0.9 0.3)}))
+
 (defn infer
   "Route a request to the right proposal generator.
   request: {:op kw :subject id ...op-specific...}"
@@ -166,6 +186,7 @@
     :posting/publish      (propose-publication db request)
     :posting/delist       (propose-delisting db request)
     :posting/correct      (propose-correction db request)
+    :application/refer    (propose-referral db request)
     {:summary "未対応の操作" :rationale (str op) :cites []
      :effect :noop :stake nil :confidence 0.0}))
 

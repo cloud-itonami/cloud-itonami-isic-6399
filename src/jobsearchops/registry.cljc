@@ -139,5 +139,34 @@
     {"record" record "correction_number" correction-number
      "certificate" (unsigned-certificate "PostingCorrection" correction-number correction-number)}))
 
+(defn register-referral
+  "Validate + construct the APPLICATION-REFERRAL DRAFT (superproject
+  ADR-2607131000): the record a human agency operator carries into
+  `cloud-itonami-isic-7810`'s candidacy intake. Carries the posting
+  reference and an APPLICANT REFERENCE (an operator-held pointer --
+  never PII payload in this public actor's store). Not an actuation:
+  committing it changes nothing public; the carry is the human's act.
+  `jobsearchops.governor` refuses a referral without the applicant's
+  own consent flag or against a posting that is not live."
+  [posting-id jurisdiction applicant-ref sequence]
+  (when-not (and posting-id (not= posting-id ""))
+    (throw (ex-info "referral: posting_id required" {})))
+  (when-not (and jurisdiction (not= jurisdiction ""))
+    (throw (ex-info "referral: jurisdiction required" {})))
+  (when-not (and applicant-ref (not= applicant-ref ""))
+    (throw (ex-info "referral: applicant_ref required" {})))
+  (when (< sequence 0)
+    (throw (ex-info "referral: sequence must be >= 0" {})))
+  (let [referral-number (str (str/upper-case jurisdiction) "-REF-" (zero-pad sequence 6))
+        record {"record_id" referral-number
+                "kind" "referral-draft"
+                "posting_id" posting-id
+                "jurisdiction" jurisdiction
+                "applicant_ref" applicant-ref
+                "target" "cloud-itonami-isic-7810"
+                "immutable" true}]
+    {"record" record "referral_number" referral-number
+     "certificate" (unsigned-certificate "ApplicationReferral" referral-number referral-number)}))
+
 (defn append [history result]
   (conj (vec history) (get result "record")))

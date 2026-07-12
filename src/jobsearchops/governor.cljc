@@ -199,7 +199,7 @@
   invent a jurisdiction's job-advertising/database-right
   requirements."
   [{:keys [op]} proposal]
-  (when (contains? #{:jurisdiction/assess :posting/publish :posting/delist :posting/correct} op)
+  (when (contains? #{:jurisdiction/assess :posting/publish :posting/delist :posting/correct :application/refer} op)
     (let [value (:value proposal)]
       (when (or (empty? (:cites proposal))
                 (and (contains? value :spec-basis) (nil? (:spec-basis value))))
@@ -212,7 +212,7 @@
   actually be satisfied -- do not trust the advisor's self-reported
   confidence alone."
   [{:keys [op subject]} st]
-  (when (contains? #{:posting/publish :posting/delist :posting/correct} op)
+  (when (contains? #{:posting/publish :posting/delist :posting/correct :application/refer} op)
     (let [p (store/posting st subject)
           assessment (store/assessment-of st subject)]
       (when-not (and assessment
@@ -279,6 +279,20 @@
         [{:rule :source-consent-unverified
           :detail (str subject " は求人元の転載許諾確認を要するが未確認 -- 掲載提案は進められない")}]))))
 
+(defn- applicant-consent-missing-violations
+  "For `:application/refer` (ADR-2607131000), the applicant's own
+  consent-to-refer flag must be true -- no consent, no referral, HARD.
+  This is operator-attested REQUEST input rather than store ground
+  truth (the applicant is deliberately NOT an entity in this public
+  actor's store; only a reference travels), so the check reads the
+  request -- the same posture as the spec-basis check reading the
+  proposal's citations."
+  [{:keys [op applicant-consent?]} _st]
+  (when (= op :application/refer)
+    (when-not (true? applicant-consent?)
+      [{:rule :applicant-consent-missing
+        :detail "応募者本人の紹介同意が無い -- referral は作成できない"}])))
+
 (defn- already-published-violations
   "For `:posting/publish`, refuses to publish the SAME posting record
   twice, off a dedicated `:published?` fact (never a `:status` value)."
@@ -296,11 +310,11 @@
   Off the dedicated `:published?`/`:delisted?` booleans, same
   discipline as the double-actuation guards."
   [{:keys [op subject]} st]
-  (when (= op :posting/correct)
+  (when (contains? #{:posting/correct :application/refer} op)
     (let [p (store/posting st subject)]
       (when-not (and (:published? p) (not (:delisted? p)))
         [{:rule :posting-not-live
-          :detail (str subject " は公開中でない(未掲載または取下げ済み) -- 訂正対象が存在しない")}]))))
+          :detail (str subject " は公開中でない(未掲載または取下げ済み) -- 訂正/紹介の対象が存在しない")}]))))
 
 (defn- already-delisted-violations
   "For `:posting/delist`, refuses to delist the SAME posting twice,
@@ -324,6 +338,7 @@
                            (displayed-compensation-mismatch-violations request st)
                            (source-consent-unverified-violations request st)
                            (posting-not-live-violations request st)
+                           (applicant-consent-missing-violations request st)
                            (already-published-violations request st)
                            (already-delisted-violations request st)))
         conf (:confidence proposal 0.0)

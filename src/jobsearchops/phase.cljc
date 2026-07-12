@@ -26,7 +26,7 @@
   posting itself.")
 
 (def read-ops  #{})
-(def write-ops #{:posting/ingest :jurisdiction/assess :posting/publish :posting/delist :posting/correct})
+(def write-ops #{:posting/ingest :jurisdiction/assess :posting/publish :posting/delist :posting/correct :application/refer})
 
 ;; NOTE the invariant: `:posting/publish`/`:posting/delist`/
 ;; `:posting/correct` are members of `write-ops` (governor-gated like

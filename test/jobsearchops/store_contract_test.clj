@@ -102,3 +102,17 @@
         (store/commit-record! s {:effect :posting/mark-corrected :path ["posting-1"]})
         (is (= 2 (count (store/correction-history s))))
         (is (= "JPN-COR-000001" (:correction-number (store/posting s "posting-1"))))))))
+
+(deftest referral-parity
+  (doseq [[label s] (backends)]
+    (testing label
+      (store/commit-record! s {:effect :referral/record :path ["posting-1"]
+                               :value {:posting-id "posting-1" :applicant-ref "applicant-ref-001"}})
+      (is (= "JPN-REF-000000" (get (first (store/referral-history s)) "record_id")))
+      (is (= "applicant-ref-001" (get (first (store/referral-history s)) "applicant_ref")))
+      (is (= 1 (store/next-referral-sequence s "JPN")))
+      (testing "multiple referrals per posting are normal"
+        (store/commit-record! s {:effect :referral/record :path ["posting-1"]
+                                 :value {:posting-id "posting-1" :applicant-ref "applicant-ref-002"}})
+        (is (= 2 (count (store/referral-history s))))
+        (is (= "JPN-REF-000001" (get (second (store/referral-history s)) "record_id")))))))

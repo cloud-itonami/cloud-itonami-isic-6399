@@ -224,6 +224,7 @@ in its Offer:
 | Posting publication, HARD-gated on full evidence, a current (non-closed) source vacancy, non-discriminatory ad content, a matching displayed pay and (when applicable) a verified source consent, plus a double-publication guard (`:posting/publish`) | |
 | Posting delisting, HARD-gated on full evidence, plus a double-delisting guard (`:posting/delist`) | |
 | Posting correction (訂正 — 職業安定法5条の4's other half; ADR-0002), HARD-gated on the SAME content gates as a publication plus a posting-not-live guard; multiple corrections per posting, each with its own record (`:posting/correct`) | |
+| Application referral toward the placement desk (ADR-2607131000/ADR-0003): a human-carried draft — HARD-gated on the applicant's own consent and a live posting; the record holds an applicant REFERENCE, never PII (`:application/refer`) | Cross-actor invocation (forbidden by design) |
 | Immutable audit ledger for every ingest/assessment/publication/delisting decision | |
 
 Extending coverage is additive — `:posting/correct` (ADR-0002) is the

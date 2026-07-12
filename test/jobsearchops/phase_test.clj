@@ -42,3 +42,11 @@
 
 (deftest gate-escalates-a-clean-correction
   (is (= :escalate (:disposition (phase/gate 3 {:op :posting/correct} :commit)))))
+
+(deftest referral-never-auto-and-phase-gated
+  (testing "a referral routes to a human at phase 3 (the carry IS the human act) and is phase-disabled below 3"
+    (doseq [[n {:keys [auto]}] phase/phases]
+      (is (not (contains? auto :application/refer))
+          (str "phase " n " must not auto-commit :application/refer")))
+    (is (= :escalate (:disposition (phase/gate 3 {:op :application/refer} :commit))))
+    (is (= :hold (:disposition (phase/gate 1 {:op :application/refer} :commit))))))

@@ -81,6 +81,16 @@
     (println "== posting/correct posting-3 (not live -> HARD hold :posting-not-live) ==")
     (println (exec-op actor "t7d" {:op :posting/correct :subject "posting-3"} operator))
 
+    (println "== application/refer posting-6 (応募 referral、本人同意あり -- escalates -- human carries; ADR-2607131000) ==")
+    (println (exec-op actor "t7e" {:op :application/refer :subject "posting-6"
+                                   :applicant-ref "applicant-ref-001"
+                                   :applicant-consent? true} operator))
+    (println (approve! actor "t7e"))
+
+    (println "== application/refer posting-6 (同意なし -> HARD hold) ==")
+    (println (exec-op actor "t7f" {:op :application/refer :subject "posting-6"
+                                   :applicant-ref "applicant-ref-002"} operator))
+
     (println "== jurisdiction/assess posting-2 (no spec-basis -> HARD hold) ==")
     (println (exec-op actor "t8" {:op :jurisdiction/assess :subject "posting-2" :no-spec? true} operator))
 
@@ -128,4 +138,7 @@
     (doseq [r (store/delisting-history db)] (println r))
 
     (println "== draft correction records ==")
-    (doseq [r (store/correction-history db)] (println r))))
+    (doseq [r (store/correction-history db)] (println r))
+
+    (println "== application referral drafts (human-carried to isic-7810) ==")
+    (doseq [r (store/referral-history db)] (println r))))

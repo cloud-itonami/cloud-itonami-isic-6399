@@ -216,3 +216,40 @@
       (is (= :hold (get-in res [:state :disposition])))
       (is (some #{:displayed-compensation-mismatch} (-> (store/ledger db) last :basis)))
       (is (empty? (store/correction-history db))))))
+
+(deftest referral-with-consent-escalates-then-records
+  (testing "ADR-2607131000: a consented referral against a live posting escalates (the human carry), and approval records only -- nothing on the posting changes"
+    (let [[db actor] (fresh)
+          _ (assess! actor "t16pre" "posting-1")
+          _ (publish! actor "t16pre" "posting-1")
+          r1 (exec-op actor "t16" {:op :application/refer :subject "posting-1"
+                                   :applicant-ref "applicant-ref-001"
+                                   :applicant-consent? true} operator)]
+      (is (= :interrupted (:status r1)))
+      (let [r2 (approve! actor "t16")]
+        (is (= :commit (get-in r2 [:state :disposition])))
+        (is (= "JPN-REF-000000" (get (first (store/referral-history db)) "record_id")))
+        (is (= "cloud-itonami-isic-7810" (get (first (store/referral-history db)) "target")))
+        (is (true? (:published? (store/posting db "posting-1"))) "posting untouched")))))
+
+(deftest referral-without-consent-is-held
+  (testing "no applicant consent, no referral -- HARD, unoverridable"
+    (let [[db actor] (fresh)
+          _ (assess! actor "t17pre" "posting-1")
+          _ (publish! actor "t17pre" "posting-1")
+          res (exec-op actor "t17" {:op :application/refer :subject "posting-1"
+                                    :applicant-ref "applicant-ref-001"} operator)]
+      (is (= :hold (get-in res [:state :disposition])))
+      (is (some #{:applicant-consent-missing} (-> (store/ledger db) last :basis)))
+      (is (empty? (store/referral-history db))))))
+
+(deftest referral-against-dead-posting-is-held
+  (testing "a referral needs a LIVE posting -- unpublished/delisted postings have nothing to apply to"
+    (let [[db actor] (fresh)
+          _ (assess! actor "t18pre" "posting-1")
+          res (exec-op actor "t18" {:op :application/refer :subject "posting-1"
+                                    :applicant-ref "applicant-ref-001"
+                                    :applicant-consent? true} operator)]
+      (is (= :hold (get-in res [:state :disposition])))
+      (is (some #{:posting-not-live} (-> (store/ledger db) last :basis)))
+      (is (empty? (store/referral-history db))))))

@@ -119,6 +119,11 @@
                                   :displayed-compensation 248000.0}})
       (exec! "c6-correct" {:op :posting/correct :subject "posting-6"})
 
+      ;; the referral handoff (ADR-2607131000): an application on the board
+      ;; becomes a human-carried referral draft toward the placement desk.
+      (exec! "r6" {:op :application/refer :subject "posting-6"
+                   :applicant-ref "applicant-ref-001" :applicant-consent? true})
+
       ;; the HARD-hold attempts, one per governor check (posting-2's
       ;; spec-basis hold happens at assess; the rest assess cleanly, then
       ;; fail publish), plus the double-actuation guard on posting-1.
@@ -127,18 +132,23 @@
                                         ["h5" "posting-5"] ["h7" "posting-7"]]]
                          (do (exec! (str tid "-assess") {:op :jurisdiction/assess :subject pid})
                              [pid (exec! (str tid "-publish") {:op :posting/publish :subject pid})])))
-            double-publish (exec! "g1" {:op :posting/publish :subject "posting-1"})]
+            double-publish (exec! "g1" {:op :posting/publish :subject "posting-1"})
+            no-consent (exec! "r6b" {:op :application/refer :subject "posting-6"
+                                     :applicant-ref "applicant-ref-002"})]
         (into [{:posting (store/posting db "posting-2") :violations (violations-of no-spec)}]
               (concat (for [[pid run] holds]
                         {:posting (store/posting db pid) :violations (violations-of run)})
                       [{:posting (store/posting db "posting-1") :violations (violations-of double-publish)
-                        :note "二重掲載の試行"}]))))))
+                        :note "二重掲載の試行"}
+                       {:posting (store/posting db "posting-6") :violations (violations-of no-consent)
+                        :note "本人同意なし referral の試行"}]))))))
 
 ;; -- post-run state -----------------------------------------------------------
 
 (def all-postings (store/all-postings db))
 (def live-index (vec (filter #(and (:published? %) (not (:delisted? %))) all-postings)))
 (def delisted (vec (filter :delisted? all-postings)))
+(def referrals (store/referral-history db))
 (def ledger (store/ledger db))
 
 (defn ledger-line [{:keys [t op subject disposition basis]}]
@@ -268,6 +278,18 @@
                 (when note (str " · " note))]]
               [:td (into [:span] (for [v violations] [:span [:span.badge.hold (name (:rule v))] " "]))]
               [:td (cstr/join " / " (map :detail violations))]]))]
+
+    (when (seq referrals)
+      [:div
+       [:h2 "紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)"]
+       [:p "ボード上の求人への応募は、actor 間の直接呼び出しではなく人間が "
+        [:a {:href "/cloud-itonami-isic-7810/"} "Placement Desk (isic-7810)"]
+        " へ運ぶ referral 記録になります。応募者本人の同意なしには作成できず、"
+        "記録が持つのは応募者への参照のみ(PII 本体はこの公開 actor の store に入りません)。"]
+       (into [:ul]
+             (for [r referrals]
+               [:li [:code (get r "record_id")] " → " (get r "posting_id")
+                " (applicant: " (get r "applicant_ref") ") → 搬送先 " (get r "target")]))])
 
     [:h2 "監査台帳 — 上の全実行が実際に書いた追記専用レコード"]
     [:p "掲載・取下げ・拒否のすべてが不変の台帳に残ります(的確表示義務コンプライアンスの証跡)。"

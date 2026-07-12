@@ -83,3 +83,19 @@
   (is (thrown? Exception (r/register-correction "" "JPN" 0)))
   (is (thrown? Exception (r/register-correction "posting-1" "" 0)))
   (is (thrown? Exception (r/register-correction "posting-1" "JPN" -1))))
+
+;; ----------------------------- register-referral -----------------------------
+
+(deftest referral-assigns-referral-number-and-target
+  (let [result (r/register-referral "posting-1" "JPN" "applicant-ref-042" 3)]
+    (is (= (get result "referral_number") "JPN-REF-000003"))
+    (is (= (get-in result ["record" "posting_id"]) "posting-1"))
+    (is (= (get-in result ["record" "applicant_ref"]) "applicant-ref-042"))
+    (is (= (get-in result ["record" "target"]) "cloud-itonami-isic-7810"))
+    (is (= (get-in result ["record" "kind"]) "referral-draft"))))
+
+(deftest referral-validation-rules
+  (is (thrown? Exception (r/register-referral "" "JPN" "a" 0)))
+  (is (thrown? Exception (r/register-referral "posting-1" "" "a" 0)))
+  (is (thrown? Exception (r/register-referral "posting-1" "JPN" "" 0)))
+  (is (thrown? Exception (r/register-referral "posting-1" "JPN" "a" -1))))

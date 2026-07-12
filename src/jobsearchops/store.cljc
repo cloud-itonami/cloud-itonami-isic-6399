@@ -45,9 +45,11 @@
   (publication-history [s] "the append-only posting-publication history (jobsearchops.registry drafts)")
   (delisting-history [s] "the append-only posting-delisting history (jobsearchops.registry drafts)")
   (correction-history [s] "the append-only posting-correction history (jobsearchops.registry drafts)")
+  (referral-history [s] "the append-only application-referral history (ADR-2607131000 drafts)")
   (next-publication-sequence [s jurisdiction] "next publication-number sequence for a jurisdiction")
   (next-delisting-sequence [s jurisdiction] "next delisting-number sequence for a jurisdiction")
   (next-correction-sequence [s jurisdiction] "next correction-number sequence for a jurisdiction")
+  (next-referral-sequence [s jurisdiction] "next referral-number sequence for a jurisdiction")
   (posting-already-published? [s posting-id] "has this posting already been published?")
   (posting-already-delisted? [s posting-id] "has this posting already been delisted?")
   (commit-record! [s record] "apply a committed op's record to the SSoT")
@@ -162,9 +164,11 @@
   (publication-history [_] (:publication-records @a))
   (delisting-history [_] (:delisting-records @a))
   (correction-history [_] (:correction-records @a))
+  (referral-history [_] (:referral-records @a))
   (next-publication-sequence [_ jurisdiction] (get-in @a [:publication-sequences jurisdiction] 0))
   (next-delisting-sequence [_ jurisdiction] (get-in @a [:delisting-sequences jurisdiction] 0))
   (next-correction-sequence [_ jurisdiction] (get-in @a [:correction-sequences jurisdiction] 0))
+  (next-referral-sequence [_ jurisdiction] (get-in @a [:referral-sequences jurisdiction] 0))
   (posting-already-published? [_ posting-id] (boolean (get-in @a [:postings posting-id :published?])))
   (posting-already-delisted? [_ posting-id] (boolean (get-in @a [:postings posting-id :delisted?])))
   (commit-record! [s {:keys [effect path value payload]}]
@@ -207,6 +211,19 @@
                        (update-in [:postings posting-id] merge posting-patch)
                        (update :correction-records registry/append result))))
         result)
+
+      ;; application referral (ADR-2607131000): records only -- nothing on
+      ;; the posting changes, and multiple referrals per posting are normal.
+      :referral/record
+      (let [posting-id (first path)
+            jurisdiction (:jurisdiction (posting s posting-id))
+            seq-n (next-referral-sequence s jurisdiction)
+            result (registry/register-referral posting-id jurisdiction (:applicant-ref value) seq-n)]
+        (swap! a (fn [state]
+                   (-> state
+                       (update-in [:referral-sequences jurisdiction] (fnil inc 0))
+                       (update :referral-records registry/append result))))
+        result)
       nil)
     s)
   (append-ledger! [_ fact] (swap! a update :ledger conj fact) fact)
@@ -220,7 +237,8 @@
                            :assessments {}
                            :ledger [] :publication-sequences {} :publication-records []
                            :delisting-sequences {} :delisting-records []
-                           :correction-sequences {} :correction-records []))))
+                           :correction-sequences {} :correction-records []
+                           :referral-sequences {} :referral-records []))))
 
 ;; ----------------------------- DatomicStore (langchain.db) -----------------------------
 
@@ -236,9 +254,11 @@
    :publication-record/seq           {:db/unique :db.unique/identity}
    :delisting-record/seq             {:db/unique :db.unique/identity}
    :correction-record/seq            {:db/unique :db.unique/identity}
+   :referral-record/seq              {:db/unique :db.unique/identity}
    :publication-sequence/jurisdiction {:db/unique :db.unique/identity}
    :delisting-sequence/jurisdiction   {:db/unique :db.unique/identity}
-   :correction-sequence/jurisdiction  {:db/unique :db.unique/identity}})
+   :correction-sequence/jurisdiction  {:db/unique :db.unique/identity}
+   :referral-sequence/jurisdiction    {:db/unique :db.unique/identity}})
 
 (defn- enc [v] (pr-str v))
 (defn- dec* [s] (when s (edn/read-string s)))
@@ -323,6 +343,10 @@
     (->> (d/q '[:find ?s ?r :where [?e :correction-record/seq ?s] [?e :correction-record/record ?r]] (d/db conn))
          (sort-by first)
          (mapv (comp dec* second))))
+  (referral-history [_]
+    (->> (d/q '[:find ?s ?r :where [?e :referral-record/seq ?s] [?e :referral-record/record ?r]] (d/db conn))
+         (sort-by first)
+         (mapv (comp dec* second))))
   (next-publication-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :publication-sequence/jurisdiction ?j] [?e :publication-sequence/next ?n]]
@@ -336,6 +360,11 @@
   (next-correction-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :correction-sequence/jurisdiction ?j] [?e :correction-sequence/next ?n]]
+            (d/db conn) jurisdiction)
+        0))
+  (next-referral-sequence [_ jurisdiction]
+    (or (d/q '[:find ?n . :in $ ?j
+              :where [?e :referral-sequence/jurisdiction ?j] [?e :referral-sequence/next ?n]]
             (d/db conn) jurisdiction)
         0))
   (posting-already-published? [s posting-id]
@@ -381,6 +410,17 @@
                      [(posting->tx (assoc posting-patch :id posting-id))
                       {:correction-sequence/jurisdiction jurisdiction :correction-sequence/next next-n}
                       {:correction-record/seq (count (correction-history s)) :correction-record/record (enc (get result "record"))}])
+        result)
+
+      :referral/record
+      (let [posting-id (first path)
+            jurisdiction (:jurisdiction (posting s posting-id))
+            seq-n (next-referral-sequence s jurisdiction)
+            result (registry/register-referral posting-id jurisdiction (:applicant-ref value) seq-n)
+            next-n (inc seq-n)]
+        (d/transact! conn
+                     [{:referral-sequence/jurisdiction jurisdiction :referral-sequence/next next-n}
+                      {:referral-record/seq (count (referral-history s)) :referral-record/record (enc (get result "record"))}])
         result)
       nil)
     s)
