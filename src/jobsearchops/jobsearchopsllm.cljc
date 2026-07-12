@@ -19,8 +19,14 @@
 
   Proposal shape (all kinds):
     {:summary    str            ; human-facing draft / finding
-     :rationale  str            ; why -- SCANNED by the spec-basis gate
-     :cites      [kw|str ..]    ; facts/sources the LLM used -- SCANNED too
+     :rationale  str            ; why -- shown to the human approver;
+                                 ; NOT machine-scanned (the gates read
+                                 ; :cites and the Store's own ground
+                                 ; truth; a keyword scan here would
+                                 ; false-positive on statute names like
+                                 ; 男女雇用機会均等法 in clean assess
+                                 ; rationales)
+     :cites      [kw|str ..]    ; facts/sources the LLM used -- SCANNED
      :effect     kw             ; how a commit would mutate the SSoT
      :stake      kw|nil         ; :actuation/publish-posting | :actuation/delist-posting | nil
      :confidence 0..1}"
