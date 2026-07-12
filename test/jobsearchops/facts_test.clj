@@ -6,13 +6,13 @@
   (is (some? (facts/spec-basis "JPN")))
   (is (string? (:provenance (facts/spec-basis "JPN")))))
 
-(deftest all-four-seeded-jurisdictions-have-a-consent-spec-basis
+(deftest all-seeded-jurisdictions-have-a-consent-spec-basis
   ;; matching employmentops/7810's own full work-authorization,
   ;; practiceops/7110's own full professional-seal and quarryops/0810's
-  ;; own full blast-safety sub-citation coverage, ALL FOUR seeded
+  ;; own full blast-safety sub-citation coverage, ALL SIX seeded
   ;; jurisdictions actually have a real source-republication/database-
   ;; right regime here -- reported honestly, not forced narrower
-  (doseq [iso3 ["JPN" "USA" "GBR" "DEU"]]
+  (doseq [iso3 ["JPN" "USA" "GBR" "DEU" "FRA" "KOR"]]
     (is (some? (facts/consent-spec-basis iso3)) (str iso3 " consent-spec-basis"))
     (is (string? (:consent-provenance (facts/consent-spec-basis iso3))) (str iso3 " consent-provenance"))))
 

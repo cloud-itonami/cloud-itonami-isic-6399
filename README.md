@@ -203,7 +203,7 @@ precedent).
 |---|---|
 | `src/jobsearchops/store.cljc` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + publication AND delisting history (dual history). The double-actuation guard checks dedicated `:published?`/`:delisted?` booleans rather than a `:status` value |
 | `src/jobsearchops/registry.cljc` | Publication/delisting draft records, plus `displayed-compensation-matches-claim?` -- an honest reapplication of the SAME ground-truth-recompute discipline every sibling actor's own cost/total-matching check establishes |
-| `src/jobsearchops/facts.cljc` | Per-jurisdiction job-advertising AND source-republication/database-right catalog with an official spec-basis citation per entry, honest coverage reporting -- ALL FOUR seeded jurisdictions have a consent sub-citation here |
+| `src/jobsearchops/facts.cljc` | Per-jurisdiction job-advertising AND source-republication/database-right catalog with an official spec-basis citation per entry, honest coverage reporting -- ALL SIX seeded jurisdictions have a consent sub-citation here |
 | `src/jobsearchops/jobsearchopsllm.cljc` | **JobSearch-LLM** -- `mock-advisor` ‖ `llm-advisor`; ingest/jurisdiction-assessment/publication/delisting proposals |
 | `src/jobsearchops/governor.cljc` | **Job Search Portal Governor** -- 6 named HARD checks (spec-basis · evidence-incomplete · stale-vacancy, FLAGSHIP domain-unique · ad-content-discriminatory, reapplied · displayed-compensation-mismatch, ground-truth · source-consent-unverified, CONDITIONAL) + 2 double-actuation guards + 1 soft (confidence/actuation gate) |
 | `src/jobsearchops/phase.cljc` | **Phase 0→3** -- read-only → assisted ingest → assisted assess → supervised (publish/delist always human; posting ingest is the ONLY auto-eligible op, no direct public-facing risk) |
@@ -236,15 +236,15 @@ pattern this repo's flagship ops establish.
 
 `jobsearchops.facts/coverage` reports how many requested jurisdictions
 actually have an official spec-basis in `jobsearchops.facts/catalog`
--- currently 4 seeded (JPN, USA, GBR, DEU) out of ~194 jurisdictions
+-- currently 6 seeded (JPN, USA, GBR, DEU, FRA, KOR) out of ~194 jurisdictions
 worldwide. This is a starting catalog to prove the governor contract
 end-to-end, not a claim of global coverage. Adding a jurisdiction is
 additive: one map entry in `jobsearchops.facts/catalog`, citing a real
 official source -- never fabricate a jurisdiction's requirements to
 make coverage look bigger. Note that the source-consent sub-citation
-is FULL coverage rather than a gap: ALL FOUR seeded jurisdictions
-(JPN, USA, GBR, DEU) actually have a real source-republication/
-database-right regime, reported honestly.
+is FULL coverage rather than a gap: ALL SIX seeded jurisdictions
+(JPN, USA, GBR, DEU, FRA, KOR) actually have a real source-
+republication/database-right regime, reported honestly.
 
 ## Maturity
 

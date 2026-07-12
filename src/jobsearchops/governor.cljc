@@ -147,9 +147,11 @@
                                        提供事業者 regime, the US's 17
                                        U.S.C. §103/§106, the UK's
                                        Copyright and Rights in
-                                       Databases Regulations 1997, and
-                                       Germany's UrhG §§87a–87e -- ALL
-                                       FOUR seeded jurisdictions
+                                       Databases Regulations 1997,
+                                       Germany's UrhG §§87a–87e,
+                                       France's CPI L341-1 ff. and
+                                       Korea's 저작권법91–98조 -- ALL
+                                       SIX seeded jurisdictions
                                        actually have a real regime
                                        here, reported honestly.
     7. Confidence floor / actuation

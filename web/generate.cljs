@@ -234,9 +234,9 @@
     [:div.search
      [:input {:id "q" :type "search" :placeholder "職種・雇用主・キーワードで検索…"
               :autocomplete "off"}]
-     [:select {:id "jur"}
-      [:option {:value ""} "全法域"]
-      [:option {:value "JPN"} "日本 (JPN)"]]
+     (into [:select {:id "jur"} [:option {:value ""} "全法域"]]
+           (for [j (sort (distinct (map :jurisdiction live-index)))]
+             [:option {:value j} j]))
      [:select {:id "src"}
       [:option {:value ""} "全ソース"]
       [:option {:value "employer-direct"} "雇用主直接"]

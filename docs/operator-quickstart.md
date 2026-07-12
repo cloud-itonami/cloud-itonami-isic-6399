@@ -32,9 +32,9 @@ $EDITOR postings.edn        # your own postings; field notes in the example file
 ```
 
 Record shape and semantics are documented in `postings.example.edn`.
-Jurisdictions must exist in `jobsearchops.facts/catalog` (JPN/USA/GBR/DEU
-in R0) — extending the catalog is one map entry **citing a real official
-source** (see the README's jurisdiction-coverage section; never fabricate
+Jurisdictions must exist in `jobsearchops.facts/catalog`
+(JPN/USA/GBR/DEU/FRA/KOR seeded) — extending the catalog is one map
+entry **citing a real official source** (see the README's jurisdiction-coverage section; never fabricate
 one).
 
 ## 2. Generate the board through the real actor

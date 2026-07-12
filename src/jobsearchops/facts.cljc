@@ -29,7 +29,7 @@
   Coverage is reported HONESTLY (see `coverage`), the same discipline
   every sibling actor's `facts` namespace uses: a jurisdiction not in
   this table has NO spec-basis, full stop -- the advisor must not
-  fabricate one, and the governor holds if it tries. ALL FOUR seeded
+  fabricate one, and the governor holds if it tries. ALL SIX seeded
   jurisdictions actually have a real source-republication/database-
   right regime, reported honestly (a full-coverage sub-citation,
   matching `employmentops`/7810's own work-authorization full coverage
@@ -92,7 +92,31 @@
                               "Quellenzustimmungsprotokoll (source-consent record)"]
           :consent-owner-authority "Deutsches Patent- und Markenamt (DPMA) / Justizministerium"
           :consent-legal-basis "Urheberrechtsgesetz (UrhG) §§87a–87e (Datenbankherstellerrecht, sui generis database right)"
-          :consent-provenance "https://www.gesetze-im-internet.de/urhg/__87a.html"}})
+          :consent-provenance "https://www.gesetze-im-internet.de/urhg/__87a.html"}
+   "FRA" {:name "France"
+          :owner-authority "Ministère du Travail (Direction générale du travail) / Défenseur des droits"
+          :legal-basis "Code du travail art. L5331-1 (interdiction des offres d'emploi comportant des allégations fausses -- misleading job offers prohibited) et art. L1132-1 (principe de non-discrimination)"
+          :national-spec "Code du travail, cinquième partie: diffusion et publicité des offres d'emploi"
+          :provenance "https://www.legifrance.gouv.fr/codes/id/LEGITEXT000006072050/"
+          :required-evidence ["Dossier source (source record)"
+                              "Justificatif de rémunération (compensation-disclosure record)"
+                              "Registre de publication (publication record)"
+                              "Registre de consentement de la source (source-consent record)"]
+          :consent-owner-authority "Juridictions civiles / INPI"
+          :consent-legal-basis "Code de la propriété intellectuelle art. L341-1 à L343-7 (droit sui generis du producteur de bases de données, transposition de la directive 96/9/CE)"
+          :consent-provenance "https://www.legifrance.gouv.fr/codes/id/LEGITEXT000006069414/"}
+   "KOR" {:name "South Korea"
+          :owner-authority "고용노동부 (Ministry of Employment and Labor, MOEL)"
+          :legal-basis "채용절차의 공정화에 관한 법률 제4조 (거짓 채용광고 등의 금지 -- false job advertisements prohibited) 및 남녀고용평등법 제7조 (모집·채용에서의 차별 금지)"
+          :national-spec "채용절차법에 따른 공정채용 지침 (MOEL fair-hiring guidance)"
+          :provenance "https://www.law.go.kr/"
+          :required-evidence ["구인원 기록 (source record)"
+                              "임금표시 기록 (compensation-disclosure record)"
+                              "게재 기록 (publication record)"
+                              "전재허락 기록 (source-consent record)"]
+          :consent-owner-authority "문화체육관광부 / 한국저작권위원회 (Korea Copyright Commission)"
+          :consent-legal-basis "저작권법 제91조–제98조 (데이터베이스제작자의 보호 -- database producer rights)"
+          :consent-provenance "https://www.law.go.kr/"}})
 
 (defn spec-basis
   "The jurisdiction's requirement map, or nil -- nil means NO spec-basis,
@@ -134,8 +158,8 @@
 (defn consent-spec-basis
   "The jurisdiction's source-republication/database-right requirement
   map, or nil -- nil means this jurisdiction has NO formal
-  source-republication regime this catalog is aware of. In this R0
-  catalog all four seeded jurisdictions actually have one, reported
+  source-republication regime this catalog is aware of. All six seeded
+  jurisdictions actually have one, reported
   honestly (a full-coverage sub-citation, matching `employmentops`/
   7810's own work-authorization full coverage)."
   [iso3]
