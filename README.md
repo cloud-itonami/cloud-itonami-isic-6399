@@ -129,6 +129,19 @@ clojure -M:dev:test    # governor contract · phase invariants · store parity �
 clojure -M:lint        # clj-kondo (errors fail; CI mirrors this)
 ```
 
+## Real-advisor verification (live model)
+
+`dev/real_advisor_check.clj` builds the actor with the REAL
+`llm-advisor` over the murakumo fleet's keyless Ollama nodes and proves
+the invariant that matters live: whatever the model emits, a posting
+whose STORE ground truth violates a HARD check is HELD (stale vacancy,
+discriminatory content), and non-schema-conformant model output
+degrades to the safe noop path instead of ever committing. Verified
+2026-07-13 against gemma4:12b-it-qat (which does NOT reliably follow
+the proposal schema — every deviation degraded safely; that is the
+architecture working, not a failure). Needs the tailnet; run
+instructions in the file's docstring.
+
 ## Live demo (GitHub Pages)
 
 **<https://cloud-itonami.github.io/cloud-itonami-isic-6399/>** -- a
