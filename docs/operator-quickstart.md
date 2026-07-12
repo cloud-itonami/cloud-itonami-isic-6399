@@ -76,8 +76,12 @@ visitors.
   (`:requires-source-consent?` / `:source-consent-verified?` model this;
   the consent register behind them is yours to keep).
 - Re-run the generator whenever your source data changes — a stale board
-  is exactly what the 的確表示義務 forbids. In practice: cron the
-  generate + commit, and let the stale-vacancy gate delist what closed.
+  is exactly what the 的確表示義務 forbids. In practice:
+  `.github/workflows/regenerate.yml` already does this nightly (rebuild
+  through the actor from `web/postings.edn`, verify, commit only on
+  change — a posting whose source closed is HARD-held on the next build
+  and thereby leaves the index). If your org disables Actions, run the
+  same generate/verify/commit trio from any scheduler.
 
 ## 5. Where this goes next
 

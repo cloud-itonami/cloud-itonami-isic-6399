@@ -32,6 +32,7 @@
   {"postings-data" (el "postings-data" {"textContent" json-block})
    "q"             (el "q" {"value" ""})
    "jur"           (el "jur" {"value" ""})
+   "src"           (el "src" {"value" ""})
    "results"       (el "results" {"innerHTML" ""})
    "empty"         (el "empty" {"hidden" true})})
 
@@ -63,6 +64,14 @@
 ((get @listeners ["q" "input"]))
 (assert! (.includes (results-html) "Forklift Operator") "query 'forklift' keeps posting-8")
 (assert! (not (.includes (results-html) "Chuo Kitchen")) "query 'forklift' filters posting-6 out")
+
+;; source facet: partner-feed keeps posting-6 only
+(aset (get elements "q") "value" "")
+(aset (get elements "src") "value" "partner-feed")
+((get @listeners ["src" "change"]))
+(assert! (.includes (results-html) "Chuo Kitchen") "source facet keeps partner-feed posting-6")
+(assert! (not (.includes (results-html) "Forklift Operator")) "source facet filters employer-direct posting-8 out")
+(aset (get elements "src") "value" "")
 
 ;; simulate a query with no hits -> empty notice shown
 (aset (get elements "q") "value" "zzz-no-such-job")

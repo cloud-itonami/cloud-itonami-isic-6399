@@ -24,8 +24,9 @@
        " <span class=\"meta\">(" (esc (:wage p)) " — 求人元記録と独立再計算が一致)</span></div>"
        "</div>"))
 
-(defn- matches? [p q jur]
+(defn- matches? [p q jur src]
   (and (or (= jur "") (= jur (:jurisdiction p)))
+       (or (= src "") (= src (:source p)))
        (or (= q "")
            (.includes (.toLowerCase (str (:title p) " " (:employer p) " " (:source p)))
                       q))))
@@ -33,11 +34,13 @@
 (defn- render! []
   (let [q (.toLowerCase (.-value (js/document.getElementById "q")))
         jur (.-value (js/document.getElementById "jur"))
-        hits (filter #(matches? % q jur) postings)]
+        src (.-value (js/document.getElementById "src"))
+        hits (filter #(matches? % q jur src) postings)]
     (set! (.-innerHTML (js/document.getElementById "results"))
           (apply str (map card-html hits)))
     (set! (.-hidden (js/document.getElementById "empty")) (boolean (seq hits)))))
 
 (.addEventListener (js/document.getElementById "q") "input" render!)
 (.addEventListener (js/document.getElementById "jur") "change" render!)
+(.addEventListener (js/document.getElementById "src") "change" render!)
 (render!)

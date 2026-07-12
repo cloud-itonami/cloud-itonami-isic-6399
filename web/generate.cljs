@@ -158,9 +158,9 @@
      "input#q" {:flex 1 :font-size 16 :padding "10px 14px"
                 :border "1.5px solid var(--line)" :border-radius 8
                 :background "var(--bg)" :color "var(--fg)"}
-     "select#jur" {:font-size 15 :padding "10px 12px"
-                   :border "1.5px solid var(--line)" :border-radius 8
-                   :background "var(--bg)" :color "var(--fg)"}
+     "select#jur, select#src" {:font-size 15 :padding "10px 12px"
+                               :border "1.5px solid var(--line)" :border-radius 8
+                               :background "var(--bg)" :color "var(--fg)"}
      ".card" {:background "var(--card)" :border "1px solid var(--line)"
               :border-radius 10 :padding "14px 16px" :margin-top 12}
      ".card h3" {:margin "0 0 2px" :font-size 16}
@@ -226,7 +226,12 @@
               :autocomplete "off"}]
      [:select {:id "jur"}
       [:option {:value ""} "全法域"]
-      [:option {:value "JPN"} "日本 (JPN)"]]]
+      [:option {:value "JPN"} "日本 (JPN)"]]
+     [:select {:id "src"}
+      [:option {:value ""} "全ソース"]
+      [:option {:value "employer-direct"} "雇用主直接"]
+      [:option {:value "partner-feed"} "提携フィード"]
+      [:option {:value "board-crawl"} "許諾クロール"]]]
 
     [:div {:id "results"}]
     [:p {:id "empty" :hidden true} "該当する求人はありません。"]

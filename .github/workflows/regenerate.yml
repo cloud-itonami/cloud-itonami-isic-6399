@@ -1,0 +1,67 @@
+# Nightly regeneration -- the 的確表示義務 (keep postings accurate and
+# current) as automation: rebuild docs/ through the real actor from the
+# current posting data (web/postings.edn when an operator fork has one,
+# the demo set otherwise), verify with the headless harnesses, and
+# commit only when the rendered board actually changed. A posting whose
+# source closed since the last run is HARD-held by the stale-vacancy
+# gate on the next build and thereby leaves the index.
+#
+# Fork note: this runs on the default GITHUB_TOKEN (contents: write).
+# If your org disables Actions, run the same three commands from any
+# scheduler (see docs/operator-quickstart.md §4).
+name: regenerate-board
+on:
+  schedule:
+    - cron: '23 17 * * *'   # 02:23 JST nightly (off-minute on purpose)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cloud-itonami/cloud-itonami-isic-6399
+      - uses: actions/checkout@v4
+        with: {repository: kotoba-lang/html, path: kotoba-lang/html}
+      - uses: actions/checkout@v4
+        with: {repository: kotoba-lang/css, path: kotoba-lang/css}
+      - uses: actions/checkout@v4
+        with: {repository: kotoba-lang/langchain, path: kotoba-lang/langchain}
+      - uses: actions/checkout@v4
+        with: {repository: kotoba-lang/langgraph, path: kotoba-lang/langgraph}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install nbb
+        run: npm install nbb
+      - name: regenerate through the real actor
+        working-directory: cloud-itonami/cloud-itonami-isic-6399/web
+        run: |
+          ../../../../node_modules/.bin/nbb \
+            --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
+            generate.cljs $( [ -f postings.edn ] && echo postings.edn )
+      - name: verify (headless harness)
+        working-directory: cloud-itonami/cloud-itonami-isic-6399/web
+        # verify_search's fixtures describe the demo set; operator forks
+        # get a generic sanity check instead (the ledger section only
+        # exists when the actor actually ran).
+        run: |
+          if [ -f postings.edn ]; then
+            grep -q '監査台帳' ../docs/index.html && echo "operator board sanity ok"
+          else
+            ../../../../node_modules/.bin/nbb verify_search.cljs
+          fi
+      - name: commit when changed
+        working-directory: cloud-itonami/cloud-itonami-isic-6399
+        run: |
+          if ! git diff --quiet docs/; then
+            git config user.name "regenerate-board[bot]"
+            git config user.email "noreply@github.com"
+            git add docs/
+            git commit -m "chore(board): nightly regeneration through the actor (的確表示)"
+            git push
+          else
+            echo "board unchanged"
+          fi
