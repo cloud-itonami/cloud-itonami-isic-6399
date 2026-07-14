@@ -1,0 +1,22 @@
+(ns cloud-itonami-displayed-compensation)
+
+(defn displayed-compensation-matches? [source-hourly-wage source-monthly-hours displayed-compensation]
+  (= (* source-hourly-wage source-monthly-hours) displayed-compensation))
+
+;; ABI: `main` stays 0-arity (the compiler rejects a parameterized main --
+;; :main-arity, see kotoba-lang/kotoba's compile-wasm-expr) and reads its
+;; three real i32 inputs out of the exported linear memory instead, at
+;; fixed byte offsets a host writes into before calling main() (same
+;; convention as cloud-itonami-isic-6492's affordability.kotoba /
+;; cloud-itonami-isic-6512's claim_coverage.kotoba):
+;;   offset 0: source-hourly-wage      (i32, smallest currency unit -- yen
+;;                                      has no sub-unit, so this is a plain
+;;                                      integer wage/hour)
+;;   offset 4: source-monthly-hours    (i32, hours/month, integer)
+;;   offset 8: displayed-compensation  (i32, smallest currency unit -- the
+;;                                      posting's own claimed monthly total)
+;; Returns 1 (displayed-compensation equals source-hourly-wage x
+;; source-monthly-hours -- no violation) or 0 (mismatch -- jobsearchops.
+;; governor's :displayed-compensation-mismatch HARD violation).
+(defn main []
+  (displayed-compensation-matches? (mem-i32-at 0 0) (mem-i32-at 0 4) (mem-i32-at 0 8)))
