@@ -223,6 +223,7 @@ precedent).
 | `src/jobsearchops/operation.cljc` | **OperationActor** -- langgraph StateGraph |
 | `src/jobsearchops/sim.cljc` | demo driver |
 | `test/jobsearchops/*_test.clj` | governor contract · phase invariants · store parity · registry conformance · facts coverage |
+| `wasm/displayed_compensation.kotoba` | PoC: a WASM-compiled (`kotoba-lang/kotoba` -> `kotoba-lang/kototama`'s `actor:host` ABI) port of `registry.cljc`'s `displayed-compensation-matches-claim?` ground-truth recompute -- see `wasm/README.md` for scope, the input/output ABI, and what's out of scope (Store, the posting lookup, the governor's op-gate) |
 
 ## Business-process coverage (honest)
 
