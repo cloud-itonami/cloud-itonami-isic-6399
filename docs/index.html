@@ -5,6 +5,7 @@
 .badge.hold { background: var(--hold-bg); color: var(--hold-fg); }
 input#q { flex: 1; font-size: 16px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; }
+footer p.cta { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 14px; }
 body { font-family: system-ui,-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; margin: 0 auto; max-width: 880px; padding: 28px 20px 48px; color: var(--fg); background: var(--bg); line-height: 1.55; }
 select#jur, select#src { font-size: 15px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
@@ -161,6 +162,9 @@ governor-hold · op=:application/refer · subject=posting-6 · disposition=hold 
       <li>すべての掲載・取下げ・拒否が追記専用の監査台帳に残る</li>
     </ul>
     <footer>
+      <p class="cta">
+        <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml">🡒 自分の地域・業界でこのボードを運営したい方はこちら(operator-interest)</a>
+      </p>
       <p>OSS (AGPL-3.0-or-later)。fork して自分の求人ポータルとして運営できます — <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md">business model</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md">operator guide</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md">architecture ADR</a> · 姉妹デモ: <a href="https://cloud-itonami.github.io/cloud-itonami-isic-6310/">Talent Board (isic-6310)</a>。このページは <code>web/generate.cljs</code> (nbb) が実 actor を実行して生成し、検索は <code>search.cljs</code> (scittle = ブラウザ内 ClojureScript) が実行しています。</p>
     </footer>
     <script type="application/json" id="postings-data">[{"employer":"Chuo Kitchen","jurisdiction":"JPN","publication":"JPN-PUB-000001","source":"partner-feed","title":"Line Cook","correction":"JPN-COR-000000","id":"posting-6","pay":"¥248,000/月","wage":"時給 ¥1,550 × 160h"},{"employer":"Yama Warehouse","jurisdiction":"JPN","publication":"JPN-PUB-000002","source":"employer-direct","title":"Forklift Operator","correction":null,"id":"posting-8","pay":"¥272,000/月","wage":"時給 ¥1,700 × 160h"}]</script>

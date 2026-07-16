@@ -79,7 +79,7 @@ Operators can sell:
 - migration: import from an existing board/spreadsheet, with governor
   screening as the cleanup step
 
-Example pricing shapes (illustrative — adapt per country and support burden):
+Example pricing shapes (adapt per country and support burden):
 
 | Package | Customer | Price shape (example) |
 |---|---|---|
@@ -88,6 +88,17 @@ Example pricing shapes (illustrative — adapt per country and support burden):
 | Managed regulated | 届出事業者 running multiple boards | ¥200k+/月 + audit package |
 | Sponsored listings | employers on a hosted board | ¥5k–30k/枠/月 (operator keeps margin) |
 | Operator enablement | SI/consultant | training + certification |
+
+**Market-anchored (2026-07-16)**: the ¥50k–150k/月 managed-board band above was checked against 6
+real competitor SaaS products (`90-docs/pricing-intelligence/pricing-intelligence-ledger.edn`,
+`run-id "pricing-intel-20260716-02"`) — Madgex ($500+/mo, sales-gated), JobBoard.io ($449–649/mo),
+JBoard ($249–849/mo), WP Job Manager (free core + $16–39 add-ons), Adicio/CareerCast (opaque
+turnkey), and Japan's engage (free board creation + ¥7,000/day ticketed distribution). Converting
+the US comparables at ~¥150/$ lands at ¥37k–127k+/月, which the band already covers — no revision
+needed. The finding also confirms free-then-monetize (AGPL self-host, in our case) is a proven
+funnel shape in both the US and JP markets, not a pattern unique to this repo. See
+`90-docs/pricing-intelligence/README.md` for the full methodology and the other 28 verticals it
+covers.
 
 ## Unit Economics (worked example, illustrative)
 

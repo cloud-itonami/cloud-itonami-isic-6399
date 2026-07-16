@@ -145,6 +145,13 @@ instructions in the file's docstring.
 ## Live demo (GitHub Pages)
 
 **<https://cloud-itonami.github.io/cloud-itonami-isic-6399/>** -- a
+static demo. Want to run this for your own region/sector/association?
+[**Register operator interest**](https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml)
+-- see [`docs/business-model.md`](docs/business-model.md) for the
+revenue model and [`docs/operator-quickstart.md`](docs/operator-quickstart.md)
+for the fork-to-published walkthrough.
+
+The demo above is a
 static, zero-build search UI (synthetic data). NOTHING on it is
 hand-typed: `web/generate.cljs` (nbb) runs the FULL OperationActor
 StateGraph at build time (ingest -> assess -> publish -> delist with
