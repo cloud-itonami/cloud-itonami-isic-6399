@@ -100,6 +100,13 @@ funnel shape in both the US and JP markets, not a pattern unique to this repo. S
 `90-docs/pricing-intelligence/README.md` for the full methodology and the other 28 verticals it
 covers.
 
+**Subscribe (2026-07-16, ADR-2607161745)**: a live Stripe Payment Link for the Managed Starter tier
+(¥80,000/月 flat) is available now — [**subscribe to Managed Job Board — Starter**](https://buy.stripe.com/bJe9AS74n1dmcOQcEvbMQ0b).
+This is a no-code Stripe-hosted checkout; nothing in this repo's code changed. After subscribing,
+contact gftdcojp via an [operator-interest issue](https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml)
+to arrange managed-tenant setup (there is no automated onboarding yet — this is a manual
+fulfillment step today).
+
 ## Unit Economics (worked example, illustrative)
 
 One managed community board (≤2k postings, JPN only):
