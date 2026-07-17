@@ -1,5 +1,7 @@
 # Operator Quickstart — your own governed job board, fork to published
 
+**Who this is for:** Workforce programs, community boards, regional associations, and labor-market operators who want to aggregate job postings under their own control, with an independent Governor that automatically rejects stale, discriminatory, or unlicensed content. You own the data, you own the index, you bear the liability—and the software handles the compliance checks for you.
+
 This walks the shortest path from forking this repo to a published,
 governor-checked job board on your own GitHub Pages. It is the concrete
 version of `docs/business-model.md`'s funnel step 2 (fork / self-host).
@@ -56,7 +58,7 @@ nbb --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/s
 ```
 
 Every posting is assessed and submitted for publication through the
-actual OperationActor: what the Job Search Portal Governor holds
+actual OperationActor and the independent [Job Search Portal Governor](https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc). What the Governor rejects
 (stale vacancy, pay mismatch, missing source consent, discriminatory ad
 content, uncatalogued jurisdiction) lands in the page's transparency
 table with its real verdict; only governor-passed postings reach the
