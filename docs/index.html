@@ -1,15 +1,11 @@
 <!doctype html>
-<html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Meta Job Search — governed job-posting aggregation (cloud-itonami-isic-6399)</title><meta name="description" content="Open-source job-posting aggregation with an independent Governor that enforces compliance. Stale postings, pay mismatches, and unlicensed content never reach job seekers. Fork, deploy, and operate your own board."><style>table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13.5px; }
+<html lang="ja">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Meta Job Search — governed job-posting aggregation (cloud-itonami-isic-6399)</title><meta name="description" content="求人メタサーチのオープンソース実装デモ。独立ガバナーが的確表示義務・賃金表示・転載許諾・差別広告を検査した求人だけが検索インデックスに載る。"><style>table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13.5px; }
 :root { --bg: #ffffff; --line: #d0d7de; --muted: #57606a; --accent: #0b5cad; --hold-bg: #ffebe9; --ok-fg: #116329; --card: #f6f8fa; --ok-bg: #dafbe1; --fg: #1b1f24; --hold-fg: #a40e26; }
 .badge.hold { background: var(--hold-bg); color: var(--hold-fg); }
 input#q { flex: 1; font-size: 16px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; }
 footer p.cta { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 14px; }
-.cta-group { margin: 32px 0; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
-.cta-group h3 { margin-top: 0; font-size: 16px; }
-.cta-primary { display: inline-block; background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-right: 12px; margin-top: 12px; }
-.cta-primary:hover { opacity: 0.9; }
 body { font-family: system-ui,-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; margin: 0 auto; max-width: 880px; padding: 28px 20px 48px; color: var(--fg); background: var(--bg); line-height: 1.55; }
 select#jur, select#src { font-size: 15px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
@@ -33,39 +29,31 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
   <body>
     <header>
       <h1>Meta Job Search <span class="badge ok">governed</span></h1>
-      <p class="sub"><strong>The problem:</strong> Job boards lock in operator data or inject ads that exploit both job seekers and employers. <strong>The solution:</strong> An open-source job-posting aggregator you fork, operate, and control—with an independent Governor that automatically enforces compliance so illegal, discriminatory, or stale postings never reach searchers. <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399">Code</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md">Business Model</a>.</p>
-      <p class="sub" style="font-size: 13.5px;"><strong>What this is NOT:</strong> This software does not crawl sources, match candidates, or place applicants—it aggregates postings, assesses them against jurisdiction rules, and publishes only those that pass an independent regulatory Governor.</p>
+      <p class="sub">求人メタサーチ — 独立ガバナーの検査を通過した求人だけが載る検索インデックス。 <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399">cloud-itonami-isic-6399</a> のライブデモ(合成データ)。このページの内容はすべて、生成時に実 actor(StateGraph + Governor)を実行した結果です。</p>
     </header>
-    <div class="cta-group">
-      <h3>Ready to operate your own board?</h3>
-      <a href="https://itonami.cloud/isco-1212/" class="cta-primary">→ Claim a free tenant</a>
-      <p style="margin-top: 12px; font-size: 14px;">Or <a href="https://itonami.cloud/docs/go-live.md">go live with managed hosting</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399">Fork on GitHub</a></p>
-    </div>
-    <h2>Live demo — see the Governor in action</h2>
-    <p>This demo runs the real OperationActor at build time. Every posting is assessed against jurisdiction rules and the independent <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc">Job Search Portal Governor</a> — hard checks that prevent stale postings, pay mismatches, missing consents, and discriminatory content from ever reaching the index. The refusal table below shows what the Governor rejected and why.</p>
-    <div class="search"><input id="q" type="search" placeholder="Search by title, employer, keyword…" autocomplete="off"><select id="jur">
-      <option value="">All jurisdictions</option>
-      <option value="JPN">Japan (JPN)</option>
+    <div class="search"><input id="q" type="search" placeholder="職種・雇用主・キーワードで検索…" autocomplete="off"><select id="jur">
+      <option value="">全法域</option>
+      <option value="JPN">JPN</option>
     </select><select id="src">
-      <option value="">All sources</option>
-      <option value="employer-direct">Employer direct</option>
-      <option value="partner-feed">Partner feed</option>
-      <option value="board-crawl">Licensed crawl</option>
+      <option value="">全ソース</option>
+      <option value="employer-direct">雇用主直接</option>
+      <option value="partner-feed">提携フィード</option>
+      <option value="board-crawl">許諾クロール</option>
     </select></div>
     <div id="results"></div>
-    <p id="empty" hidden>No postings match your search.</p>
+    <p id="empty" hidden>該当する求人はありません。</p>
     <p>
-      <span class="meta">Delisted (removed from index): </span>
-      <span class="meta">Warehouse Associate (Kita Logistics) — source vacancy filled after publication, automatically delisted on next build per compliance rules (<code>JPN-DLS-000000</code>).</span>
+      <span class="meta">取下げ済み(インデックス外): </span>
+      <span class="meta">Warehouse Associate (Kita Logistics) — 掲載後に充足し取下げ(<code>JPN-DLS-000000</code>)。的確表示義務はこの「消える」側も含む。</span>
     </p>
-    <h2>Governor transparency — postings the Governor rejected</h2>
-    <p>This is the difference from legacy job boards: publication decisions are not made by LLM discretion or operator judgment, but by <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc">hard checks in the independent Governor</a> (not overrideable by humans). This table is not hand-coded—every posting below actually tried to publish, and the Governor actually rejected it. The audit ledger at the bottom proves it.</p>
+    <h2>Governor transparency — 掲載を拒否した求人票</h2>
+    <p>Indeed 型アグリゲーターとの違いはここです: 掲載判断は LLM でも運営者の裁量でもなく、<a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc">独立ガバナー</a> の HARD check が下します(人間の承認でも覆せません)。この表はハードコードではなく、ページ生成時に実際の OperationActor へ掲載を試行させ、ガバナーが拒否した実判定です。</p>
     <table>
       <thead>
         <tr>
-          <th>Posting</th>
-          <th>Governor check</th>
-          <th>Reason</th>
+          <th>求人票</th>
+          <th>HARD check</th>
+          <th>理由</th>
         </tr>
       </thead>
       <tbody>
@@ -76,7 +64,7 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
               <span><span class="badge hold">no-spec-basis</span> </span>
             </span>
           </td>
-          <td>No official regulatory citation provided; cannot process as jurisdiction requirement</td>
+          <td>公式spec-basisの引用が無い提案は法域要件として扱えない</td>
         </tr>
         <tr>
           <td><strong>Machine Operator</strong><br><span class="meta">Minami Manufacturing · JPN · posting-3</span></td>
@@ -85,7 +73,7 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
               <span><span class="badge hold">displayed-compensation-mismatch</span> </span>
             </span>
           </td>
-          <td>Displayed wage ¥300,000 does not match ground-truth recompute ¥264,000</td>
+          <td>posting-3 の表示賃金(300000)が独立再計算値(264000)と一致しない</td>
         </tr>
         <tr>
           <td><strong>Delivery Driver</strong><br><span class="meta">Higashi Transport · JPN · posting-4</span></td>
@@ -94,7 +82,7 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
               <span><span class="badge hold">ad-content-discriminatory</span> </span>
             </span>
           </td>
-          <td>Ad content contains protected-characteristic requirements (potential age/gender bias)</td>
+          <td>posting-4 の広告内容が保護属性に基づく条件を含む可能性がある</td>
         </tr>
         <tr>
           <td><strong>Line Cook</strong><br><span class="meta">Nishi Dining · JPN · posting-5</span></td>
@@ -103,7 +91,7 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
               <span><span class="badge hold">source-consent-unverified</span> </span>
             </span>
           </td>
-          <td>Source consent required but not verified—publication blocked until confirmed</td>
+          <td>posting-5 は求人元の転載許諾確認を要するが未確認 -- 掲載提案は進められない</td>
         </tr>
         <tr>
           <td><strong>Retail Clerk</strong><br><span class="meta">Minato Retail · JPN · posting-7</span></td>
@@ -112,37 +100,37 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
               <span><span class="badge hold">stale-vacancy</span> </span>
             </span>
           </td>
-          <td>Source employer reports vacancy already filled—compliance rule blocks stale postings</td>
+          <td>posting-7 の求人元は既に募集を終了している -- 的確表示義務により掲載提案は進められない</td>
         </tr>
         <tr>
-          <td><strong>Warehouse Associate</strong><br><span class="meta">Kita Logistics · JPN · posting-1 · re-publication attempt</span></td>
+          <td><strong>Warehouse Associate</strong><br><span class="meta">Kita Logistics · JPN · posting-1 · 二重掲載の試行</span></td>
           <td>
             <span>
               <span><span class="badge hold">already-published</span> </span>
             </span>
           </td>
-          <td>Posting already in index; double-publication guard triggered</td>
+          <td>posting-1 は既に掲載済み</td>
         </tr>
         <tr>
-          <td><strong>Line Cook</strong><br><span class="meta">Chuo Kitchen · JPN · posting-6 · referral without consent attempt</span></td>
+          <td><strong>Line Cook</strong><br><span class="meta">Chuo Kitchen · JPN · posting-6 · 本人同意なし referral の試行</span></td>
           <td>
             <span>
               <span><span class="badge hold">applicant-consent-missing</span> </span>
             </span>
           </td>
-          <td>Applicant did not consent to referral—cannot create record without explicit consent</td>
+          <td>応募者本人の紹介同意が無い -- referral は作成できない</td>
         </tr>
       </tbody>
     </table>
     <div>
-      <h2>Handoff to placement — human-carried referrals (ADR-2607131000)</h2>
-      <p>Applications to board postings are not direct actor-to-actor calls, but human-carried <code>referral</code> records into the <a href="https://github.com/cloud-itonami/cloud-itonami-isic-7810">Placement Desk (isic-7810)</a>. Referrals require the applicant's own consent and hold only an applicant reference ID—no PII enters this public-facing store. The placement system is separate; both ledgers join at the record ID.</p>
+      <h2>紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)</h2>
+      <p>ボード上の求人への応募は、actor 間の直接呼び出しではなく人間が <a href="/cloud-itonami-isic-7810/">Placement Desk (isic-7810)</a> へ運ぶ referral 記録になります。応募者本人の同意なしには作成できず、記録が持つのは応募者への参照のみ(PII 本体はこの公開 actor の store に入りません)。</p>
       <ul>
-        <li><code>JPN-REF-000000</code> → posting-6 (applicant: applicant-ref-001) → handed to cloud-itonami-isic-7810</li>
+        <li><code>JPN-REF-000000</code> → posting-6 (applicant: applicant-ref-001) → 搬送先 cloud-itonami-isic-7810</li>
       </ul>
     </div>
-    <h2>Immutable audit ledger — proof of every decision</h2>
-    <p>Every publication, delisting, and refusal is recorded in an append-only ledger (compliance evidence for regulators and operators). Below is the real ledger written by the actual OperationActor at build time. Regulators can audit it; operators can republish this page, re-run the actor, and verify nothing changed unexpectedly.</p>
+    <h2>監査台帳 — 上の全実行が実際に書いた追記専用レコード</h2>
+    <p>掲載・取下げ・拒否のすべてが不変の台帳に残ります(的確表示義務コンプライアンスの証跡)。以下はページ生成時の実 actor 実行が書いた事実そのものです。</p>
     <pre>committed · op=:posting/ingest · subject=posting-8 · disposition=commit · basis=[:published? :employer :source-vacancy-closed? :delisted? :jurisdiction :source :requires-source-consent? :title :ad-content-discriminatory? :status :id :displayed-compensation :source-monthly-hours :source-consent-verified? :source-hourly-wage]
 committed · op=:jurisdiction/assess · subject=posting-1 · disposition=commit · basis=[&quot;職業安定法5条の4 (求人等に関する情報の的確な表示) 及び 男女雇用機会均等法5条・労働施策総合推進法9条 (募集・採用における差別禁止)&quot; &quot;https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/shokugyoushoukai/&quot;]
 committed · op=:posting/publish · subject=posting-1 · disposition=commit · basis=[&quot;posting-1&quot;]
@@ -165,25 +153,19 @@ committed · op=:jurisdiction/assess · subject=posting-7 · disposition=commit 
 governor-hold · op=:posting/publish · subject=posting-7 · disposition=hold · basis=[:stale-vacancy]
 governor-hold · op=:posting/publish · subject=posting-1 · disposition=hold · basis=[:already-published]
 governor-hold · op=:application/refer · subject=posting-6 · disposition=hold · basis=[:applicant-consent-missing]</pre>
-    <h2>What this index guarantees</h2>
+    <h2>この検索インデックスが保証すること</h2>
     <ul>
-      <li><strong>No stale postings:</strong> If the source employer filled the vacancy, it cannot be published (required by Japan's 的確表示義務 /職業安定法5条の4, USA's wage-law, UK/EU equivalent)</li>
-      <li><strong>No pay misstatement:</strong> Displayed compensation is independently recomputed from source fields and always matches</li>
-      <li><strong>No unlicensed republication:</strong> Postings from sources that require republication consent are held until verified</li>
-      <li><strong>No discriminatory ads:</strong> Postings with protected-characteristic bias (age, gender, disability, race) are blocked (EEOC Title VII / UK Equality Act 2010 / Japan Equality Law / AGG §11)</li>
-      <li><strong>Full audit trail:</strong> Every publication, delisting, and rejection is recorded in an immutable ledger—regulators can verify it, operators can prove compliance</li>
+      <li>求人元が募集終了した求人は載らない(<strong>的確表示義務</strong> — 職業安定法5条の4、令和4年改正)</li>
+      <li>表示賃金は求人元記録からの独立再計算と常に一致する</li>
+      <li>転載許諾が必要なソースの求人は、許諾確認なしに載らない</li>
+      <li>保護属性に基づく差別的広告は載らない(均等法5条 / Title VII §704(b) / Equality Act 2010 / AGG §11)</li>
+      <li>すべての掲載・取下げ・拒否が追記専用の監査台帳に残る</li>
     </ul>
     <footer>
       <p class="cta">
-        <a href="https://itonami.cloud/isco-1212/">→ Claim a free tenant to operate your board</a>
+        <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml">🡒 自分の地域・業界でこのボードを運営したい方はこちら(operator-interest)</a>
       </p>
-      <p class="cta">
-        <a href="https://itonami.cloud/docs/go-live.md">→ Go live with managed hosting</a>
-      </p>
-      <p class="cta">
-        <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399">→ Fork the code on GitHub</a>
-      </p>
-      <p>This is open-source software (AGPL-3.0-or-later). The page is fully static (no server, no database): <code>web/generate.cljs</code> runs the real OperationActor at build time, and in-browser search is <code>search.cljs</code> (ClojureScript via scittle). See <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md">business model</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md">operator guide</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md">architecture</a> for the full story. Companion demo: <a href="https://cloud-itonami.github.io/cloud-itonami-isic-6310/">Talent Board (isic-6310)</a>.</p>
+      <p>OSS (AGPL-3.0-or-later)。fork して自分の求人ポータルとして運営できます — <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md">business model</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md">operator guide</a> · <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md">architecture ADR</a> · 姉妹デモ: <a href="https://cloud-itonami.github.io/cloud-itonami-isic-6310/">Talent Board (isic-6310)</a>。このページは <code>web/generate.cljs</code> (nbb) が実 actor を実行して生成し、検索は <code>search.cljs</code> (scittle = ブラウザ内 ClojureScript) が実行しています。</p>
     </footer>
     <script type="application/json" id="postings-data">[{"employer":"Chuo Kitchen","jurisdiction":"JPN","publication":"JPN-PUB-000001","source":"partner-feed","title":"Line Cook","correction":"JPN-COR-000000","id":"posting-6","pay":"¥248,000/月","wage":"時給 ¥1,550 × 160h"},{"employer":"Yama Warehouse","jurisdiction":"JPN","publication":"JPN-PUB-000002","source":"employer-direct","title":"Forklift Operator","correction":null,"id":"posting-8","pay":"¥272,000/月","wage":"時給 ¥1,700 × 160h"}]</script>
     <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"></script>
