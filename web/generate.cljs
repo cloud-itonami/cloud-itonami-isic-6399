@@ -208,7 +208,18 @@
      "footer p.cta" {:font-size 15 :font-weight 600 :color "var(--fg)" :margin-bottom 14}
      "a" {:color "var(--accent)"}
      "code" {:background "var(--card)" :padding "1px 5px" :border-radius 4
-             :font-size "0.9em"}}
+             :font-size "0.9em"}
+     ".pitch" {:background "var(--card)" :border "1px solid var(--line)"
+               :border-radius 12 :padding "20px 22px" :margin-top 20}
+     ".pitch h2" {:margin-top 0 :border-top "none" :padding-top 0 :font-size 18}
+     ".pitch table" {:margin-top 14}
+     ".pitch .ctarow" {:display :flex :gap 10 :flex-wrap :wrap :margin-top 18}
+     ".btn" {:display :inline-block :font-size 14 :font-weight 700
+             :padding "10px 18px" :border-radius 8 :text-decoration :none}
+     ".btn.primary" {:background "var(--accent)" :color "#ffffff"}
+     ".btn.secondary" {:background "transparent" :color "var(--fg)"
+                       :border "1.5px solid var(--line)"}
+     ".pitch .fine" {:color "var(--muted)" :font-size 12.5 :margin-top 10}}
     :media
     {"(prefers-color-scheme: dark)"
      {":root" {:--fg "#e6edf3" :--bg "#0d1117" :--muted "#8d96a0"
@@ -230,9 +241,9 @@
    [:head
     [:meta {:charset "utf-8"}]
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-    [:title "Meta Job Search — governed job-posting aggregation (cloud-itonami-isic-6399)"]
+    [:title "求人メタサーチ自社運営 — 営業電話なしで即¥80,000/月 | Meta Job Search (cloud-itonami-isic-6399)"]
     [:meta {:name "description"
-            :content "求人メタサーチのオープンソース実装デモ。独立ガバナーが的確表示義務・賃金表示・転載許諾・差別広告を検査した求人だけが検索インデックスに載る。"}]
+            :content "自治体・業界団体・求人媒体向け求人メタサーチ。Madgexは営業電話必須の非公開価格、このボードは即決フラット¥80,000/月。職業安定法5条の4(的確表示義務)を独立ガバナーが人間の承認でも覆せずHOLDする。"}]
     stylesheet]
    [:body
     [:header
@@ -241,6 +252,33 @@
       [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399"} "cloud-itonami-isic-6399"]
       " のライブデモ(合成データ)。このページの内容はすべて、生成時に実 actor"
       "(StateGraph + Governor)を実行した結果です。"]]
+
+    [:div.pitch
+     [:h2 "見積もりのために営業電話、していませんか?"]
+     [:p "Madgexは価格非公開・sales-gated(問い合わせ必須)。JobBoard.io・JBoard は公開価格が"
+      "あるものの月額$249〜849。このボードは"
+      [:strong " 即決フラット ¥80,000/月"] "、営業プロセス不要で今すぐ始められます。"]
+     [:table
+      [:thead [:tr [:th "求人ボードSaaS"] [:th "価格の出し方"] [:th "実勢価格"]]]
+      [:tbody
+       [:tr [:td "Madgex"] [:td "非公開(要問い合わせ)"] [:td "$500+/月〜(要見積)"]]
+       [:tr [:td "JobBoard.io"] [:td "公開・段階制"] [:td "$449〜649/月"]]
+       [:tr [:td "JBoard"] [:td "公開・段階制"] [:td "$249〜849/月"]]
+       [:tr [:td "engage (日本)"] [:td "無料+従量課金"] [:td "掲載無料 + ¥7,000/日 配信"]]
+       [:tr [:td [:strong "このボード"]] [:td [:strong "即決・公開・フラット"]] [:td [:strong "¥80,000/月"]]]]]
+     [:p "さらに、令和4年職業安定法改正の"
+      [:strong "的確表示義務(5条の4)"] "を独立ガバナーが構造的に検査 — "
+      "賃金表示・転載許諾・差別的広告のいずれかで不合格の求人は、人間の承認があっても"
+      "検索インデックスに載りません。"]
+     [:div.ctarow
+      [:a.btn.primary {:href "https://buy.stripe.com/bJe9AS74n1dmcOQcEvbMQ0b"}
+       "🡒 Managed Job Board を購読(¥80,000/月)"]
+      [:a.btn.secondary {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new"}
+       "自前運用(セルフホスト)に興味がある"]]
+     [:p.fine "価格根拠: "
+      [:a {:href "https://github.com/com-junkawasaki/root/blob/main/90-docs/pricing-intelligence/pricing-intelligence-ledger.edn"}
+       "6社の実競合調査(2026-07-16)"]
+      " — 下の技術デモは合成データによる実 actor 実行結果、この価格比較表とは独立して生成されています。"]]
 
     [:div.search
      [:input {:id "q" :type "search" :placeholder "職種・雇用主・キーワードで検索…"
