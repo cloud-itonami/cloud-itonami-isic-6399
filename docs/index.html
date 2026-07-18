@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ja">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Meta Job Search — governed job-posting aggregation (cloud-itonami-isic-6399)</title><meta name="description" content="求人メタサーチのオープンソース実装デモ。独立ガバナーが的確表示義務・賃金表示・転載許諾・差別広告を検査した求人だけが検索インデックスに載る。"><style>table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13.5px; }
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>求人メタサーチ自社運営 — 営業電話なしで即¥80,000/月 | Meta Job Search (cloud-itonami-isic-6399)</title><meta name="description" content="自治体・業界団体・求人媒体向け求人メタサーチ。Madgexは営業電話必須の非公開価格、このボードは即決フラット¥80,000/月。職業安定法5条の4(的確表示義務)を独立ガバナーが人間の承認でも覆せずHOLDする。"><style>table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13.5px; }
 :root { --bg: #ffffff; --line: #d0d7de; --muted: #57606a; --accent: #0b5cad; --hold-bg: #ffebe9; --ok-fg: #116329; --card: #f6f8fa; --ok-bg: #dafbe1; --fg: #1b1f24; --hold-fg: #a40e26; }
 .badge.hold { background: var(--hold-bg); color: var(--hold-fg); }
 input#q { flex: 1; font-size: 16px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
@@ -8,21 +8,29 @@ td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top
 footer p.cta { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 14px; }
 body { font-family: system-ui,-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; margin: 0 auto; max-width: 880px; padding: 28px 20px 48px; color: var(--fg); background: var(--bg); line-height: 1.55; }
 select#jur, select#src { font-size: 15px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.btn.secondary { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+.pitch table { margin-top: 14px; }
+.pitch { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-top: 20px; }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
 h2 { font-size: 17px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 24px; }
 .card .meta { color: var(--muted); font-size: 13.5px; }
 .chip { display: inline-block; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 1px 9px; margin-right: 6px; }
 .search { display: flex; gap: 8px; margin-top: 20px; }
+.btn { display: inline-block; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 8px; text-decoration: none; }
+.pitch .fine { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
 .card .pay { margin-top: 6px; font-size: 15px; font-weight: 600; }
 a { color: var(--accent); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 12px; }
 pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; }
 header p.sub { color: var(--muted); margin-top: 4px; }
+.btn.primary { background: var(--accent); color: #ffffff; }
 #empty { color: var(--muted); margin-top: 16px; }
 .badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
 .card h3 { margin: 0 0 2px; font-size: 16px; }
+.pitch .ctarow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 .badge { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 20px; padding: 2px 10px; margin-left: 8px; vertical-align: 1px; }
 h1 { font-size: 24px; margin: 0; }
+.pitch h2 { margin-top: 0; border-top: none; padding-top: 0; font-size: 18px; }
 th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1.5px solid var(--line); padding: 6px 8px; }
 code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --line: #30363d; --muted: #8d96a0; --accent: #58a6ff; --hold-bg: #2d1215; --ok-fg: #3fb950; --card: #161b22; --ok-bg: #12261e; --fg: #e6edf3; --hold-fg: #f85149; } }</style></head>
@@ -31,6 +39,58 @@ code { background: var(--card); padding: 1px 5px; border-radius: 4px; font-size:
       <h1>Meta Job Search <span class="badge ok">governed</span></h1>
       <p class="sub">求人メタサーチ — 独立ガバナーの検査を通過した求人だけが載る検索インデックス。 <a href="https://github.com/cloud-itonami/cloud-itonami-isic-6399">cloud-itonami-isic-6399</a> のライブデモ(合成データ)。このページの内容はすべて、生成時に実 actor(StateGraph + Governor)を実行した結果です。</p>
     </header>
+    <div class="pitch">
+      <h2>見積もりのために営業電話、していませんか?</h2>
+      <p>Madgexは価格非公開・sales-gated(問い合わせ必須)。JobBoard.io・JBoard は公開価格があるものの月額$249〜849。このボードは<strong> 即決フラット ¥80,000/月</strong>、営業プロセス不要で今すぐ始められます。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>求人ボードSaaS</th>
+            <th>価格の出し方</th>
+            <th>実勢価格</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Madgex</td>
+            <td>非公開(要問い合わせ)</td>
+            <td>$500+/月〜(要見積)</td>
+          </tr>
+          <tr>
+            <td>JobBoard.io</td>
+            <td>公開・段階制</td>
+            <td>$449〜649/月</td>
+          </tr>
+          <tr>
+            <td>JBoard</td>
+            <td>公開・段階制</td>
+            <td>$249〜849/月</td>
+          </tr>
+          <tr>
+            <td>engage (日本)</td>
+            <td>無料+従量課金</td>
+            <td>掲載無料 + ¥7,000/日 配信</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>このボード</strong>
+            </td>
+            <td>
+              <strong>即決・公開・フラット</strong>
+            </td>
+            <td>
+              <strong>¥80,000/月</strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>さらに、令和4年職業安定法改正の<strong>的確表示義務(5条の4)</strong>を独立ガバナーが構造的に検査 — 賃金表示・転載許諾・差別的広告のいずれかで不合格の求人は、人間の承認があっても検索インデックスに載りません。</p>
+      <div class="ctarow">
+        <a class="btn primary" href="https://buy.stripe.com/bJe9AS74n1dmcOQcEvbMQ0b">🡒 Managed Job Board を購読(¥80,000/月)</a>
+        <a class="btn secondary" href="https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new">自前運用(セルフホスト)に興味がある</a>
+      </div>
+      <p class="fine">価格根拠: <a href="https://github.com/com-junkawasaki/root/blob/main/90-docs/pricing-intelligence/pricing-intelligence-ledger.edn">6社の実競合調査(2026-07-16)</a> — 下の技術デモは合成データによる実 actor 実行結果、この価格比較表とは独立して生成されています。</p>
+    </div>
     <div class="search"><input id="q" type="search" placeholder="職種・雇用主・キーワードで検索…" autocomplete="off"><select id="jur">
       <option value="">全法域</option>
       <option value="JPN">JPN</option>
