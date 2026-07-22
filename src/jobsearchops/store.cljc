@@ -32,10 +32,9 @@
   audit trail a community job board or workforce program trusting an
   operator needs, and the evidence an operator needs if a publication
   or a delisting is later disputed."
-  (:require #?(:clj  [clojure.edn :as edn]
-               :cljs [cljs.reader :as edn])
-            [jobsearchops.registry :as registry]
-            [langchain.db :as d]))
+  (:require [jobsearchops.registry :as registry]
+            [langchain.db :as d]
+            [langchain-store.core :as ls]))
 
 (defprotocol Store
   (posting [s id])
@@ -247,21 +246,16 @@
   Map/compound values (assessment payloads, ledger facts,
   publication/delisting records) are stored as EDN strings so
   `langchain.db` doesn't expand them into sub-entities -- the same
-  convention every sibling actor's store uses."
-  {:posting/id                       {:db/unique :db.unique/identity}
-   :assessment/posting-id            {:db/unique :db.unique/identity}
-   :ledger/seq                       {:db/unique :db.unique/identity}
-   :publication-record/seq           {:db/unique :db.unique/identity}
-   :delisting-record/seq             {:db/unique :db.unique/identity}
-   :correction-record/seq            {:db/unique :db.unique/identity}
-   :referral-record/seq              {:db/unique :db.unique/identity}
-   :publication-sequence/jurisdiction {:db/unique :db.unique/identity}
-   :delisting-sequence/jurisdiction   {:db/unique :db.unique/identity}
-   :correction-sequence/jurisdiction  {:db/unique :db.unique/identity}
-   :referral-sequence/jurisdiction    {:db/unique :db.unique/identity}})
-
-(defn- enc [v] (pr-str v))
-(defn- dec* [s] (when s (edn/read-string s)))
+  convention every sibling actor's store uses. The identity-schema
+  builder, EDN-blob codec and seq-keyed event-log read/append are the
+  shared kotoba-lang/langchain-store machinery (ADR-2607141600) -- the
+  seam ~190 actors hand-roll; this store keeps only its domain wiring."
+  (ls/identity-schema
+   [:posting/id :assessment/posting-id
+    :ledger/seq :publication-record/seq :delisting-record/seq
+    :correction-record/seq :referral-record/seq
+    :publication-sequence/jurisdiction :delisting-sequence/jurisdiction
+    :correction-sequence/jurisdiction :referral-sequence/jurisdiction]))
 
 (defn- posting->tx [{:keys [id title employer source
                             source-hourly-wage source-monthly-hours displayed-compensation
@@ -324,29 +318,14 @@
          (map #(pull->posting (d/pull (d/db conn) posting-pull [:posting/id %])))
          (sort-by :id)))
   (assessment-of [_ posting-id]
-    (dec* (d/q '[:find ?p . :in $ ?pid
+    (ls/dec* (d/q '[:find ?p . :in $ ?pid
                 :where [?a :assessment/posting-id ?pid] [?a :assessment/payload ?p]]
               (d/db conn) posting-id)))
-  (ledger [_]
-    (->> (d/q '[:find ?s ?f :where [?e :ledger/seq ?s] [?e :ledger/fact ?f]] (d/db conn))
-         (sort-by first)
-         (mapv (comp dec* second))))
-  (publication-history [_]
-    (->> (d/q '[:find ?s ?r :where [?e :publication-record/seq ?s] [?e :publication-record/record ?r]] (d/db conn))
-         (sort-by first)
-         (mapv (comp dec* second))))
-  (delisting-history [_]
-    (->> (d/q '[:find ?s ?r :where [?e :delisting-record/seq ?s] [?e :delisting-record/record ?r]] (d/db conn))
-         (sort-by first)
-         (mapv (comp dec* second))))
-  (correction-history [_]
-    (->> (d/q '[:find ?s ?r :where [?e :correction-record/seq ?s] [?e :correction-record/record ?r]] (d/db conn))
-         (sort-by first)
-         (mapv (comp dec* second))))
-  (referral-history [_]
-    (->> (d/q '[:find ?s ?r :where [?e :referral-record/seq ?s] [?e :referral-record/record ?r]] (d/db conn))
-         (sort-by first)
-         (mapv (comp dec* second))))
+  (ledger [_] (ls/read-stream conn :ledger/seq :ledger/fact))
+  (publication-history [_] (ls/read-stream conn :publication-record/seq :publication-record/record))
+  (delisting-history [_] (ls/read-stream conn :delisting-record/seq :delisting-record/record))
+  (correction-history [_] (ls/read-stream conn :correction-record/seq :correction-record/record))
+  (referral-history [_] (ls/read-stream conn :referral-record/seq :referral-record/record))
   (next-publication-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :publication-sequence/jurisdiction ?j] [?e :publication-sequence/next ?n]]
@@ -377,7 +356,7 @@
       (d/transact! conn [(posting->tx value)])
 
       :assessment/set
-      (d/transact! conn [{:assessment/posting-id (first path) :assessment/payload (enc payload)}])
+      (d/transact! conn [{:assessment/posting-id (first path) :assessment/payload (ls/enc payload)}])
 
       :posting/mark-published
       (let [posting-id (first path)
@@ -387,7 +366,7 @@
         (d/transact! conn
                      [(posting->tx (assoc posting-patch :id posting-id))
                       {:publication-sequence/jurisdiction jurisdiction :publication-sequence/next next-n}
-                      {:publication-record/seq (count (publication-history s)) :publication-record/record (enc (get result "record"))}])
+                      {:publication-record/seq (count (publication-history s)) :publication-record/record (ls/enc (get result "record"))}])
         result)
 
       :posting/mark-delisted
@@ -398,7 +377,7 @@
         (d/transact! conn
                      [(posting->tx (assoc posting-patch :id posting-id))
                       {:delisting-sequence/jurisdiction jurisdiction :delisting-sequence/next next-n}
-                      {:delisting-record/seq (count (delisting-history s)) :delisting-record/record (enc (get result "record"))}])
+                      {:delisting-record/seq (count (delisting-history s)) :delisting-record/record (ls/enc (get result "record"))}])
         result)
 
       :posting/mark-corrected
@@ -409,7 +388,7 @@
         (d/transact! conn
                      [(posting->tx (assoc posting-patch :id posting-id))
                       {:correction-sequence/jurisdiction jurisdiction :correction-sequence/next next-n}
-                      {:correction-record/seq (count (correction-history s)) :correction-record/record (enc (get result "record"))}])
+                      {:correction-record/seq (count (correction-history s)) :correction-record/record (ls/enc (get result "record"))}])
         result)
 
       :referral/record
@@ -420,12 +399,12 @@
             next-n (inc seq-n)]
         (d/transact! conn
                      [{:referral-sequence/jurisdiction jurisdiction :referral-sequence/next next-n}
-                      {:referral-record/seq (count (referral-history s)) :referral-record/record (enc (get result "record"))}])
+                      {:referral-record/seq (count (referral-history s)) :referral-record/record (ls/enc (get result "record"))}])
         result)
       nil)
     s)
   (append-ledger! [s fact]
-    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (enc fact)}])
+    (ls/append-blob! conn :ledger/seq :ledger/fact (count (ledger s)) fact)
     fact)
   (with-postings [s postings]
     (when (seq postings) (d/transact! conn (mapv posting->tx (vals postings)))) s))
