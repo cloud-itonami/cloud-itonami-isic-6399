@@ -1,26 +1,26 @@
 #!/usr/bin/env nbb
-;; Fetches real, currently-open job postings from the public Greenhouse
-;; Job Board API for every company listed in web/sources.edn,
-;; normalizes them through jobsearchops.ingest (portable, unit-tested
-;; in test/jobsearchops/ingest_test.clj), diffs against the previous
+;; Fetches real, currently-open job postings from two public job-board
+;; APIs (Greenhouse Job Board API, Lever Postings API) for every
+;; company listed in web/sources.edn, normalizes them through
+;; jobsearchops.ingest (portable, unit-tested in
+;; test/jobsearchops/ingest_test.clj), diffs against the previous
 ;; web/postings.edn to detect source-side closures, and writes the
 ;; merged result back to web/postings.edn -- the same file
 ;; web/generate.cljs already knows how to walk through the REAL actor
 ;; (:jurisdiction/assess, then :posting/publish for postings with
 ;; :compensation-verified? true).
 ;;
-;; No auth, no scraping, no bot-detection evasion: Greenhouse's Job
-;; Board API is documented and published by Greenhouse specifically
-;; for this kind of external aggregation
-;; (https://developers.greenhouse.io/job-board.html); every listed
-;; company chose to expose its postings this way.
+;; No auth, no scraping, no bot-detection evasion: both APIs are
+;; documented and published by their vendor specifically for this kind
+;; of external aggregation (see web/sources.edn's own header for the
+;; docs links and the api.lever.co vs jobs.lever.co robots.txt note);
+;; every listed company chose to expose its postings this way.
 ;;
-;; Compensation fields are deliberately NOT populated (see
-;; jobsearchops.ingest's ns docstring) -- wage-judgment is an
-;; explicitly deferred follow-up, not solved here. Every posting this
-;; script produces carries :compensation-verified? false, so
-;; generate.cljs assesses it through the real actor but does not
-;; attempt to publish it.
+;; Compensation fields are only populated when jobsearchops.ingest
+;; found an UNAMBIGUOUS disclosed wage range in the source's own text
+;; -- see that ns's docstring. A posting without one keeps
+;; :compensation-verified? false, so generate.cljs assesses it through
+;; the real actor but does not attempt to publish it.
 ;;
 ;; Run (from this web/ directory, inside the monorepo checkout):
 ;;   ../../../../node_modules/.bin/nbb --classpath "../src" collect.cljs
@@ -35,24 +35,35 @@
 
 (def sources (edn/read-string (fs/readFileSync sources-path "utf8")))
 
-(defn- board-url [board]
+(defmulti board-url :platform)
+(defmethod board-url :greenhouse [{:keys [board]}]
   (str "https://boards-api.greenhouse.io/v1/boards/" board "/jobs?content=true"))
+(defmethod board-url :lever [{:keys [board]}]
+  (str "https://api.lever.co/v0/postings/" board "?mode=json"))
 
-(defn fetch-board-jobs [board]
-  (-> (js/fetch (board-url board))
+;; Greenhouse wraps its jobs in {"jobs" [...]}; Lever returns the
+;; array directly -- both normalized to a plain seq of job maps here
+;; so collect-source stays platform-agnostic past this point.
+(defmulti response->jobs :platform)
+(defmethod response->jobs :greenhouse [{:keys [parsed]}] (:jobs parsed))
+(defmethod response->jobs :lever [{:keys [parsed]}] parsed)
+
+(defn fetch-board-jobs [{:keys [board] :as source-cfg}]
+  (-> (js/fetch (board-url source-cfg))
       (.then (fn [^js r]
                (if (.-ok r)
                  (.json r)
                  (throw (js/Error. (str "HTTP " (.-status r) " fetching board " board))))))
-      (.then #(:jobs (js->clj % :keywordize-keys true)))))
+      (.then #(response->jobs (assoc source-cfg :parsed (js->clj % :keywordize-keys true))))))
 
-(defn- collect-source [acc-promise {:keys [board source]}]
+(defn- collect-source [acc-promise {:keys [board platform employer source] :as source-cfg}]
   (.then acc-promise
          (fn [acc]
-           (.then (fetch-board-jobs board)
+           (.then (fetch-board-jobs source-cfg)
                   (fn [jobs]
-                    (let [{:keys [postings skipped-count]} (ingest/collect jobs source)]
-                      (println "  " board "(" source ") ->" (count postings)
+                    (let [{:keys [postings skipped-count]}
+                          (ingest/collect jobs {:platform platform :employer employer :source source})]
+                      (println "  " (name platform) "/" board "(" source ") ->" (count postings)
                                "in-scope," skipped-count "jurisdiction-skipped, out of"
                                (count jobs) "live postings on the board")
                       (into acc postings)))))))
@@ -69,22 +80,25 @@
   (fs/writeFileSync postings-path
                      (str "[" (str/join "\n " (map pr-str postings)) "]\n")))
 
+(defn- connector-managed? [{:keys [id]}]
+  (boolean (some #(str/starts-with? id %) ingest/connector-id-prefixes)))
+
 (defn -main []
   (println "Collecting from" (count sources) "real source(s):"
-            (str/join ", " (map :board sources)))
+            (str/join ", " (map #(str (name (:platform %)) "/" (:board %)) sources)))
   (-> (collect-all sources)
       (.then
        (fn [fresh]
          (let [previous (read-previous)
                fresh-ids (set (map :id fresh))
-               previously-open-gh-ids (set (map :id (remove :source-vacancy-closed? previous)))
+               previously-open-ids (set (map :id (remove :source-vacancy-closed? previous)))
                newly-closed (remove fresh-ids
-                                     (set (map :id (filter #(str/starts-with? (:id %) "gh-") previous))))
+                                     (set (map :id (filter connector-managed? previous))))
                merged (ingest/close-vanished previous fresh)]
            (write-postings! merged)
            (println "wrote" (count merged) "posting(s) to" postings-path
                      "(" (count fresh) "fresh," (count newly-closed) "newly source-closed,"
-                     (- (count previously-open-gh-ids) (count newly-closed)) "still open from prior runs)"))))
+                     (- (count previously-open-ids) (count newly-closed)) "still open from prior runs)"))))
       (.catch (fn [e]
                 (println "FAILED:" (.-message e))
                 (js/process.exit 1)))))

@@ -39,6 +39,23 @@
   {:id 1 :title "Remote role" :company_name "Acme"
    :location {:name "Remote - Mars"} :content "" :absolute_url "https://x" :updated_at "2026-01-01"})
 
+;; Real Lever Postings API fixture (https://api.lever.co/v0/postings/
+;; spotify?mode=json, verified live 2026-07-24) -- Lever's own shape
+;; differs from Greenhouse's (text/categories/country/descriptionPlain/
+;; hostedUrl/createdAt vs title/location/content/absolute_url/updated_at).
+(def spotify-london-job
+  {:id "abc-123-def"
+   :text "Account Executive, Advertising Sales"
+   :categories {:location "London" :commitment "Permanent" :department "Advertising"}
+   :country "GB"
+   :descriptionPlain "Sell what you love. Join the Sales team in London."
+   :hostedUrl "https://jobs.lever.co/spotify/abc-123-def"
+   :createdAt 1784569799619})
+
+(def lever-unmatched-job
+  {:id "xyz" :text "Remote role" :categories {:location "Somewhere"} :country "ZZ"
+   :descriptionPlain "" :hostedUrl "https://x" :createdAt 0})
+
 ;; ----------------------------- detect-jurisdiction -----------------------------
 
 (deftest detects-usa-from-state-style-location
@@ -52,6 +69,18 @@
 
 (deftest returns-nil-for-unmatched-jurisdiction
   (is (nil? (ingest/detect-jurisdiction "Remote - Mars"))))
+
+(deftest prefers-country-code-over-free-text-location
+  ;; "London" alone would ALSO match the GBR free-text pattern, but the
+  ;; country code path should be the one actually taken -- exercised by
+  ;; giving a location string that would NOT free-text-match on its own.
+  (is (= "GBR" (ingest/detect-jurisdiction "Somewhere unrecognizable" "GB"))))
+
+(deftest falls-back-to-free-text-when-no-country-code
+  (is (= "JPN" (ingest/detect-jurisdiction "Tokyo, Japan" nil))))
+
+(deftest returns-nil-for-unmatched-country-code
+  (is (nil? (ingest/detect-jurisdiction "Somewhere" "ZZ"))))
 
 ;; ----------------------------- extract-hourly-range -----------------------------
 ;; Real disclosed-text fixtures verified live against
@@ -114,14 +143,42 @@
 (deftest skips-jobs-whose-location-matches-no-covered-jurisdiction
   (is (nil? (ingest/job->posting unmatched-jurisdiction-job "employer-direct"))))
 
+;; ----------------------------- lever-job->posting -----------------------------
+
+(deftest normalizes-a-real-lever-job-into-the-posting-shape
+  (let [p (ingest/lever-job->posting spotify-london-job "Spotify" "employer-direct")]
+    (is (= "lv-abc-123-def" (:id p)))
+    (is (= "Account Executive, Advertising Sales" (:title p)))
+    (is (= "Spotify" (:employer p)))
+    (is (= "GBR" (:jurisdiction p)))
+    (is (= "https://jobs.lever.co/spotify/abc-123-def" (:source-url p)))
+    (is (= :ingested (:status p)))
+    (is (false? (:published? p)))))
+
+(deftest lever-job-skipped-when-country-code-unmatched
+  (is (nil? (ingest/lever-job->posting lever-unmatched-job "Acme" "employer-direct"))))
+
 ;; ----------------------------- collect -----------------------------
 
 (deftest collect-reports-skip-count-honestly
   (let [{:keys [postings skipped-count]}
         (ingest/collect [carvana-driver-job figma-tokyo-job unmatched-jurisdiction-job]
-                         "employer-direct")]
+                         {:platform :greenhouse :source "employer-direct"})]
     (is (= 2 (count postings)))
     (is (= 1 skipped-count))))
+
+(deftest collect-dispatches-to-lever-when-platform-lever
+  (let [{:keys [postings skipped-count]}
+        (ingest/collect [spotify-london-job lever-unmatched-job]
+                         {:platform :lever :employer "Spotify" :source "employer-direct"})]
+    (is (= 1 (count postings)))
+    (is (= 1 skipped-count))
+    (is (= "Spotify" (:employer (first postings))))))
+
+(deftest collect-defaults-to-greenhouse-platform
+  (let [{:keys [postings]}
+        (ingest/collect [carvana-driver-job] {:source "employer-direct"})]
+    (is (= "gh-7842664" (:id (first postings))))))
 
 ;; ----------------------------- close-vanished -----------------------------
 
@@ -141,3 +198,11 @@
         merged (ingest/close-vanished previous fresh)]
     (is (= 1 (count merged)))
     (is (false? (:source-vacancy-closed? (first merged))))))
+
+(deftest close-vanished-manages-both-connector-prefixes
+  (let [previous [{:id "gh-1" :title "GH role" :source-vacancy-closed? false}
+                  {:id "lv-1" :title "Lever role" :source-vacancy-closed? false}]
+        fresh []
+        merged (ingest/close-vanished previous fresh)]
+    (is (= 2 (count merged)))
+    (is (every? #(true? (:source-vacancy-closed? %)) merged))))

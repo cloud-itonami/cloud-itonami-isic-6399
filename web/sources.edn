@@ -1,29 +1,52 @@
 ;; Real, ToS-compliant source list for web/collect.cljs.
 ;;
-;; Each entry is one company's OWN official job board, hosted on
-;; Greenhouse's public Job Board API
-;; (https://developers.greenhouse.io/job-board.html) -- documented,
-;; unauthenticated, read-only, published by Greenhouse specifically for
-;; external aggregation/embedding. No scraping, no bot-detection
-;; evasion, no ToS violation: every employer listed here has already
-;; chosen to expose its own postings this way.
+;; Each entry is one company's OWN official job board, hosted on one
+;; of two documented, unauthenticated, read-only vendor APIs published
+;; specifically for external aggregation/embedding. No scraping, no
+;; bot-detection evasion, no ToS violation: every employer listed here
+;; has already chosen to expose its own postings this way.
 ;;
-;;   :board  -- the Greenhouse board token, i.e. the <token> in
-;;              https://boards-api.greenhouse.io/v1/boards/<token>/jobs
-;;   :source -- provenance tag written onto every posting this board
-;;              produces (jobsearchops posting-record field). All
-;;              entries here are "employer-direct": Greenhouse-hosted
-;;              boards ARE each company's own official careers site,
-;;              not a third-party republication requiring source
-;;              consent.
+;;   :platform -- :greenhouse (https://developers.greenhouse.io/job-
+;;                board.html, endpoint boards-api.greenhouse.io) or
+;;                :lever (https://github.com/lever/postings-api,
+;;                endpoint api.lever.co -- note api.lever.co's own
+;;                robots.txt is `Allow: /` for all agents; the
+;;                SEPARATE jobs.lever.co visitor-facing domain disallows
+;;                some crawlers, but that domain is never fetched here).
+;;   :board    -- the vendor's board token, i.e. the <token> in
+;;                boards-api.greenhouse.io/v1/boards/<token>/jobs or
+;;                api.lever.co/v0/postings/<token>.
+;;   :employer -- display name written onto every posting (:lever
+;;                only -- Lever's own per-job payload has no company-
+;;                name field; Greenhouse's does, via company_name).
+;;   :source   -- provenance tag written onto every posting this board
+;;                produces (jobsearchops posting-record field). All
+;;                entries here are "employer-direct": these boards ARE
+;;                each company's own official careers site, not a
+;;                third-party republication requiring source consent.
 ;;
 ;; Add/remove companies by editing this file -- collect.cljs has no
-;; hardcoded company list. Verified live (real, currently-open
-;; postings observed) on 2026-07-24: carvana carries genuine hourly-
-;; wage-disclosed US roles, figma carries a real Tokyo (JPN) listing,
-;; gitlab/reddit/pinterest carry real EU (GBR/DEU/FRA) listings.
-[{:board "carvana" :source "employer-direct"}
- {:board "figma" :source "employer-direct"}
- {:board "gitlab" :source "employer-direct"}
- {:board "reddit" :source "employer-direct"}
- {:board "pinterest" :source "employer-direct"}]
+;; hardcoded company/platform list. Verified live (real, currently-
+;; open postings observed) on 2026-07-24. Genuine disclosed hourly-
+;; wage ranges observed at: carvana, instacart, lucidmotors, robinhood.
+;; Real non-JPN/USA jurisdictions observed at: figma (JPN/Tokyo),
+;; gitlab/reddit/pinterest/wayve (GBR/DEU/FRA), spotify/cirquedusoleil/
+;; palantir (GBR/DEU/FRA/JPN/KOR via Lever's own `country` field).
+[{:platform :greenhouse :board "carvana" :source "employer-direct"}
+ {:platform :greenhouse :board "figma" :source "employer-direct"}
+ {:platform :greenhouse :board "gitlab" :source "employer-direct"}
+ {:platform :greenhouse :board "reddit" :source "employer-direct"}
+ {:platform :greenhouse :board "pinterest" :source "employer-direct"}
+ {:platform :greenhouse :board "hellofresh" :source "employer-direct"}
+ {:platform :greenhouse :board "doordashusa" :source "employer-direct"}
+ {:platform :greenhouse :board "taskrabbit" :source "employer-direct"}
+ {:platform :greenhouse :board "instacart" :source "employer-direct"}
+ {:platform :greenhouse :board "lucidmotors" :source "employer-direct"}
+ {:platform :greenhouse :board "robinhood" :source "employer-direct"}
+ {:platform :greenhouse :board "chargepoint" :source "employer-direct"}
+ {:platform :greenhouse :board "wayve" :source "employer-direct"}
+ {:platform :lever :board "spotify" :employer "Spotify" :source "employer-direct"}
+ {:platform :lever :board "cirquedusoleil" :employer "Cirque du Soleil" :source "employer-direct"}
+ {:platform :lever :board "palantir" :employer "Palantir" :source "employer-direct"}
+ {:platform :lever :board "chownow" :employer "ChowNow" :source "employer-direct"}
+ {:platform :lever :board "rover" :employer "Rover" :source "employer-direct"}]
