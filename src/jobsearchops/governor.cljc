@@ -250,19 +250,19 @@
 
 (defn- displayed-compensation-mismatch-violations
   "For `:posting/publish`, INDEPENDENTLY recompute whether the
-  posting's own displayed compensation equals source-hourly-wage x
-  source-monthly-hours via `jobsearchops.registry/
-  displayed-compensation-matches-claim?` -- needs no proposal
-  inspection or stored-verdict lookup at all, an honest reapplication
-  of the same discipline every sibling actor's own cost/total-matching
-  check establishes."
+  posting's own displayed compensation matches its own source record
+  via `jobsearchops.registry/displayed-compensation-matches-claim?`
+  (exact wage x hours for hand-authored/demo postings, range-
+  containment for real job-board postings -- see that fn's ns
+  docstring) -- needs no proposal inspection or stored-verdict lookup
+  at all, an honest reapplication of the same discipline every sibling
+  actor's own cost/total-matching check establishes."
   [{:keys [op subject]} st]
   (when (contains? content-gated-ops op)
     (let [p (store/posting st subject)]
       (when-not (registry/displayed-compensation-matches-claim? p)
         [{:rule :displayed-compensation-mismatch
-          :detail (str subject " の表示賃金(" (:displayed-compensation p)
-                      ")が独立再計算値(" (registry/compute-displayed-compensation p) ")と一致しない")}]))))
+          :detail (str subject " の表示賃金がsource記録と一致しない: " (registry/compensation-summary p))}]))))
 
 (defn- source-consent-unverified-violations
   "For `:posting/publish`, for a posting whose own record declares

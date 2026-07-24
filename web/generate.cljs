@@ -263,14 +263,26 @@
                :--ok-bg "#12261e" :--ok-fg "#3fb950"
                :--hold-bg "#2d1215" :--hold-fg "#f85149"}}}}))
 
+;; Two ground-truth shapes reach here (jobsearchops.registry's own ns
+;; docstring): EXACT (hand-authored/demo, JPY hourly x monthly-hours)
+;; and RANGE (real job-board data -- jobsearchops.ingest, USD hourly
+;; range verbatim from the source). `fmt-yen` on a RANGE posting's nil
+;; :displayed-compensation would silently render "¥0/月" -- wrong, not
+;; just ugly -- so both fields dispatch on shape here too.
+(defn- range-shaped? [p] (some? (:source-compensation-min p)))
+
 (defn posting->json-entry [p]
   {:id (:id p) :title (:title p) :employer (:employer p)
    :jurisdiction (:jurisdiction p) :source (:source p)
    :publication (:publication-number p)
    :correction (:correction-number p)
-   :pay (fmt-yen (:displayed-compensation p))
-   :wage (str "時給 ¥" (.format yen (:source-hourly-wage p))
-              " × " (:source-monthly-hours p) "h")})
+   :pay (if (range-shaped? p)
+          (str "$" (:displayed-compensation-min p) "–$" (:displayed-compensation-max p) "/時")
+          (fmt-yen (:displayed-compensation p)))
+   :wage (if (range-shaped? p)
+           (str "求人元開示レンジ $" (:source-compensation-min p) "–$" (:source-compensation-max p) "/時")
+           (str "時給 ¥" (.format yen (:source-hourly-wage p))
+                " × " (:source-monthly-hours p) "h"))})
 
 (def page
   [:html {:lang "ja"}

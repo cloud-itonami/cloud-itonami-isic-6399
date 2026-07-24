@@ -106,6 +106,46 @@
       (is (some #{:displayed-compensation-mismatch} (-> (store/ledger db) last :basis)))
       (is (empty? (store/publication-history db))))))
 
+(defn- ingest-range-posting!
+  "A fresh RANGE-shaped posting (real job-board data shape --
+  jobsearchops.ingest), overriding displayed-compensation-min/max on
+  top of a clean base via `overrides`."
+  [actor tid subject overrides]
+  (exec-op actor tid
+           {:op :posting/ingest :subject subject
+            :patch (merge {:id subject :title "Delivery Driver" :employer "Real Co"
+                            :source "employer-direct"
+                            :source-compensation-min 17.0 :source-compensation-max 19.0
+                            :displayed-compensation-min 17.0 :displayed-compensation-max 19.0
+                            :ad-content-discriminatory? false :source-vacancy-closed? false
+                            :requires-source-consent? false :source-consent-verified? false
+                            :published? false :delisted? false
+                            :jurisdiction "JPN" :status :ingested}
+                           overrides)}
+           operator))
+
+(deftest range-shaped-posting-within-source-range-publishes-clean
+  (testing "real job-board data (a disclosed pay RANGE, not a wage x hours pair) publishes when the displayed range is contained in the source's own disclosed range"
+    (let [[db actor] (fresh)
+          _ (ingest-range-posting! actor "t16-ingest" "range-1" {})
+          _ (assess! actor "t16pre" "range-1")
+          res (exec-op actor "t16" {:op :posting/publish :subject "range-1"} operator)]
+      (is (= :interrupted (:status res)) "governor-clean actuation still pauses for human approval")
+      (let [r2 (approve! actor "t16")]
+        (is (= :commit (get-in r2 [:state :disposition])))
+        (is (:published? (store/posting db "range-1")))))))
+
+(deftest range-shaped-posting-exceeding-source-range-is-held
+  (testing "a displayed range that overstates the source's own disclosed range -> HOLD, the same check as the exact-shape wage x hours mismatch"
+    (let [[db actor] (fresh)
+          _ (ingest-range-posting! actor "t17-ingest" "range-2"
+                                    {:displayed-compensation-min 17.0 :displayed-compensation-max 25.0})
+          _ (assess! actor "t17pre" "range-2")
+          res (exec-op actor "t17" {:op :posting/publish :subject "range-2"} operator)]
+      (is (= :hold (get-in res [:state :disposition])))
+      (is (some #{:displayed-compensation-mismatch} (-> (store/ledger db) last :basis)))
+      (is (empty? (store/publication-history db))))))
+
 (deftest source-consent-unverified-is-held-and-unoverridable
   (testing "an unverified source consent on a consent-requiring posting -> HOLD, and never reaches request-approval -- the conditional variant, a new member of the fleet's consent-check family, conditional on the posting's own :requires-source-consent? ground truth"
     (let [[db actor] (fresh)
