@@ -1,3 +1,9 @@
 /.cpcache/
 /target/
 /out/
+
+# aozora.app actor identity (Ed25519 seed) -- kotoba-server convention
+# .{actor}/identity.{edn,json}, NEVER commit a private key
+.*-actor/identity.*
+identity.edn
+identity.json
