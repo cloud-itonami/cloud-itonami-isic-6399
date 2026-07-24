@@ -1,0 +1,29 @@
+;; Real, ToS-compliant source list for web/collect.cljs.
+;;
+;; Each entry is one company's OWN official job board, hosted on
+;; Greenhouse's public Job Board API
+;; (https://developers.greenhouse.io/job-board.html) -- documented,
+;; unauthenticated, read-only, published by Greenhouse specifically for
+;; external aggregation/embedding. No scraping, no bot-detection
+;; evasion, no ToS violation: every employer listed here has already
+;; chosen to expose its own postings this way.
+;;
+;;   :board  -- the Greenhouse board token, i.e. the <token> in
+;;              https://boards-api.greenhouse.io/v1/boards/<token>/jobs
+;;   :source -- provenance tag written onto every posting this board
+;;              produces (jobsearchops posting-record field). All
+;;              entries here are "employer-direct": Greenhouse-hosted
+;;              boards ARE each company's own official careers site,
+;;              not a third-party republication requiring source
+;;              consent.
+;;
+;; Add/remove companies by editing this file -- collect.cljs has no
+;; hardcoded company list. Verified live (real, currently-open
+;; postings observed) on 2026-07-24: carvana carries genuine hourly-
+;; wage-disclosed US roles, figma carries a real Tokyo (JPN) listing,
+;; gitlab/reddit/pinterest carry real EU (GBR/DEU/FRA) listings.
+[{:board "carvana" :source "employer-direct"}
+ {:board "figma" :source "employer-direct"}
+ {:board "gitlab" :source "employer-direct"}
+ {:board "reddit" :source "employer-direct"}
+ {:board "pinterest" :source "employer-direct"}]
