@@ -21,6 +21,22 @@
   claimed as new code, though no literal code is shared (different
   domain).
 
+  Two GROUND-TRUTH SHAPES, dispatched on which fields a posting
+  carries (`range-shaped?`):
+    - EXACT (hand-authored/demo data): `:source-hourly-wage` x
+      `:source-monthly-hours` must equal `:displayed-compensation` --
+      the original check, unchanged.
+    - RANGE (real job-board data -- `jobsearchops.ingest`): real
+      postings almost always disclose a pay RANGE, never a committed
+      hourly-rate x monthly-hours pair (see that ns's own docstring
+      for why forcing the EXACT shape here would mean this namespace
+      itself fabricating the missing half). `:displayed-compensation-
+      min`/`:displayed-compensation-max` must fall within (bounds-
+      inclusive) the posting's own `:source-compensation-min`/
+      `:source-compensation-max` -- still a ground-truth-recompute
+      check, still nothing invented, just checking containment in a
+      disclosed range instead of equality with a disclosed product.
+
   This namespace is pure data + pure functions -- no I/O, no network
   call to any real source feed or search index. It builds the RECORD
   an operator would keep, not the act of publishing or delisting a
@@ -47,19 +63,62 @@
 (defn compute-displayed-compensation
   "The ground-truth monthly compensation for `posting`'s own
   `:source-hourly-wage` and `:source-monthly-hours` -- a single flat
-  wage x hours calculation, not a full payroll engine."
+  wage x hours calculation, not a full payroll engine. EXACT shape
+  only -- see `displayed-compensation-within-source-range?` for the
+  RANGE shape (ns docstring)."
   [{:keys [source-hourly-wage source-monthly-hours]}]
   (* (double source-hourly-wage) (double source-monthly-hours)))
 
+(defn- range-shaped?
+  "A posting is RANGE-shaped (real job-board data) when it carries
+  its own disclosed `:source-compensation-min`/`:source-compensation-
+  max`, as opposed to EXACT-shaped (`:source-hourly-wage` x
+  `:source-monthly-hours`, hand-authored/demo data)."
+  [{:keys [source-compensation-min source-compensation-max]}]
+  (and (some? source-compensation-min) (some? source-compensation-max)))
+
+(defn displayed-compensation-within-source-range?
+  "For a RANGE-shaped posting: do the posting's own `:displayed-
+  compensation-min`/`:displayed-compensation-max` fall within
+  (bounds-inclusive) the SAME posting's own `:source-compensation-
+  min`/`:source-compensation-max`? A pure ground-truth check against
+  the posting's own source-recorded range -- same discipline as
+  `compute-displayed-compensation`'s exact-product recompute, just
+  containment instead of equality, because a real source only ever
+  discloses a range (see ns docstring)."
+  [{:keys [source-compensation-min source-compensation-max
+           displayed-compensation-min displayed-compensation-max]}]
+  (and (some? displayed-compensation-min) (some? displayed-compensation-max)
+       (<= (double source-compensation-min) (double displayed-compensation-min))
+       (<= (double displayed-compensation-min) (double displayed-compensation-max))
+       (<= (double displayed-compensation-max) (double source-compensation-max))))
+
 (defn displayed-compensation-matches-claim?
-  "Does `posting`'s own `:displayed-compensation` equal the
-  independently recomputed `compute-displayed-compensation`? A pure
-  ground-truth check against the posting's own source-recorded fields
-  -- see ns docstring for why this is an honest reapplication of the
-  SAME discipline every sibling actor's own cost/total-matching check
+  "Does `posting`'s own displayed compensation match its own source
+  record's ground truth? Dispatches on `range-shaped?` -- RANGE-shaped
+  postings (real job-board data) via
+  `displayed-compensation-within-source-range?`, EXACT-shaped postings
+  (hand-authored/demo data) via the original wage x hours recompute.
+  See ns docstring for why this is an honest reapplication of the SAME
+  discipline every sibling actor's own cost/total-matching check
   establishes, not a new concept."
-  [{:keys [displayed-compensation] :as posting}]
-  (== (double displayed-compensation) (compute-displayed-compensation posting)))
+  [posting]
+  (if (range-shaped? posting)
+    (displayed-compensation-within-source-range? posting)
+    (== (double (:displayed-compensation posting)) (compute-displayed-compensation posting))))
+
+(defn compensation-summary
+  "Human-readable ground-truth trace for `posting`'s own displayed
+  compensation vs its own source record, correct for either shape --
+  used by the LLM advisor's proposal rationale and the governor's
+  violation detail so neither has to know which shape it's looking at
+  (and neither crashes calling the other shape's arithmetic)."
+  [posting]
+  (if (range-shaped? posting)
+    (str "displayed=[" (:displayed-compensation-min posting) "," (:displayed-compensation-max posting)
+         "] source-range=[" (:source-compensation-min posting) "," (:source-compensation-max posting) "]")
+    (str "displayed=" (:displayed-compensation posting)
+         " independent-recompute=" (compute-displayed-compensation posting))))
 
 (defn register-publication
   "Validate + construct the POSTING-PUBLICATION registration DRAFT --

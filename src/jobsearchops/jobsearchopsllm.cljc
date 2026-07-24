@@ -101,8 +101,7 @@
                       (when p (str " (" (:title p) " / " (:employer p) ")")))
      :rationale  (if p
                    (str "source-vacancy-closed?=" (:source-vacancy-closed? p)
-                        " displayed=" (:displayed-compensation p)
-                        " independent-recompute=" (registry/compute-displayed-compensation p)
+                        " " (registry/compensation-summary p)
                         " consent-ok?=" consent-ok?)
                    "postingが見つかりません")
      :cites      (if p [subject] [])
@@ -152,9 +151,7 @@
     {:summary    (str subject " 訂正提案"
                       (when p (str " (" (:title p) " / " (:employer p) ")")))
      :rationale  (if p
-                   (str "live?=" live?
-                        " displayed=" (:displayed-compensation p)
-                        " independent-recompute=" (registry/compute-displayed-compensation p))
+                   (str "live?=" live? " " (registry/compensation-summary p))
                    "postingが見つかりません")
      :cites      (if p [subject] [])
      :effect     :posting/mark-corrected

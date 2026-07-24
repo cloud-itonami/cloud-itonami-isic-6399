@@ -12,21 +12,62 @@
   for programmatic consumption. No scraping, no bot-detection evasion,
   no ToS violation.
 
-  COMPENSATION FIELDS ARE DELIBERATELY NOT POPULATED HERE. This
-  actor's `:source-hourly-wage`/`:source-monthly-hours` fields are
-  documented (postings.example.edn) as 'the source record's own
-  ground truth' -- but real job postings almost never state a
-  committed monthly-hours figure alongside an hourly rate (they state
-  a pay RANGE and shift times, not a fixed rate x guaranteed hours).
-  Inventing the missing half to satisfy `jobsearchops.registry`'s
-  wage x hours recompute would be exactly the fabricated-ground-truth
-  problem this actor's governor exists to catch -- just moved one
-  layer upstream of where it could catch it. So every posting this ns
-  produces carries `:compensation-verified? false`; `web/generate.cljs`
-  reads that flag and assesses-but-does-not-publish such postings
-  (see its operator-mode lifecycle). Filling that gap responsibly is
-  an explicitly deferred follow-up, not solved here."
+  COMPENSATION: this actor's ORIGINAL `:source-hourly-wage`/
+  `:source-monthly-hours` fields are documented (postings.example.edn)
+  as 'the source record's own ground truth' -- but real job postings
+  almost never state a committed monthly-hours figure alongside an
+  hourly rate (they state a pay RANGE and shift times, not a fixed
+  rate x guaranteed hours). Inventing the missing half to satisfy
+  `jobsearchops.registry`'s original wage x hours recompute would be
+  exactly the fabricated-ground-truth problem this actor's governor
+  exists to catch, one layer upstream of where it could catch it.
+
+  So this ns extracts the RANGE shape instead (`jobsearchops.registry`
+  now checks displayed-range-within-source-range, not just wage x
+  hours -- see its ns docstring): `extract-hourly-range` reads an
+  UNAMBIGUOUS \"$lo-$hi (per) hour\" range the source itself printed
+  and nothing else -- no currency conversion, no annual-to-hourly
+  guess, no filling in a number the source didn't state. A posting
+  where no such range is found keeps `:compensation-verified? false`
+  and NO compensation fields at all; `web/generate.cljs` reads that
+  flag and assesses-but-does-not-publish such postings.
+
+  KNOWN LIMITATION: `extract-hourly-range` only recognizes a literal
+  \"$\" (USD) hourly range -- the only disclosure shape verified
+  against real data so far (Greenhouse-hosted US postings; see
+  test/jobsearchops/ingest_test.clj's real fixtures). Non-USD
+  disclosures (a real GBR/DEU/FRA/JPN/KOR posting stating its own
+  wage in its own currency) are a further follow-up once real verified
+  examples of that disclosure shape are found -- not guessed at here."
   (:require [clojure.string :as str]))
+
+(defn- parse-wage-number [s]
+  #?(:clj (Double/parseDouble s)
+     :cljs (js/parseFloat s)))
+
+(def hourly-range-pattern
+  "Matches an UNAMBIGUOUS USD hourly-wage range the source itself
+  printed, e.g. \"$17-$19 hourly\", \"$17.50 - $19.00 per hour\",
+  \"$17/hr - $19/hr\" -- verified against real Carvana postings
+  (test/jobsearchops/ingest_test.clj). Requires the trailing hour/hr
+  unit so it doesn't mistake an unrelated dollar range (a signing
+  bonus, an equipment allowance) for a wage; requires no comma in
+  either number so it doesn't mistake a big comma-formatted annual
+  salary figure for an hourly one."
+  #"(?i)\$(\d+(?:\.\d+)?)\s*(?:/\s*hr)?\s*(?:-|–|to)\s*\$(\d+(?:\.\d+)?)\s*(?:/|per\s*)?\s*(?:hr\b|hour)")
+
+(defn extract-hourly-range
+  "[min max] USD hourly compensation `text` unambiguously states, or
+  nil if none found or the extracted bounds are implausible (min <= 0,
+  min > max, or max over 200 -- a generous ceiling for ANY real
+  hourly wage; catches a mis-matched annual figure some other way).
+  Never estimates -- only ever reads two numbers the source itself
+  printed."
+  [text]
+  (when-let [[_ lo hi] (re-find hourly-range-pattern (or text ""))]
+    (let [lo (parse-wage-number lo) hi (parse-wage-number hi)]
+      (when (and (pos? lo) (<= lo hi) (<= hi 200.0))
+        [lo hi]))))
 
 (def jurisdiction-patterns
   "iso3 -> regexes tried in order against a Greenhouse job's
@@ -39,11 +80,17 @@
    ["FRA" [#"(?i)\bfrance\b" #"(?i)\bparis\b"]]
    ["KOR" [#"(?i)south korea" #"(?i)\bkorea\b" #"(?i)\bseoul\b"]]])
 
-;; USPS 2-letter state/territory codes -- checked as a WHOLE-CODE match
-;; (word-boundary, comma-delimited) so e.g. "DE" (Delaware) never
+;; USPS 2-letter state/territory codes -- checked as a WHOLE-CODE,
+;; case-sensitive match (word-boundary) so e.g. "DE" (Delaware) never
 ;; collides with a bare substring match; "US"/"USA"/"United States" are
 ;; matched directly too. Checked only after the jurisdiction-specific
-;; patterns above have had a chance to match a location string.
+;; patterns above have had a chance to match a location string. Match
+;; is CASE-SENSITIVE uppercase (real Greenhouse `location.name` values
+;; print state codes in caps, e.g. "CA - Remote", "Wichita, KS") so an
+;; ordinary lowercase word never collides; codes are checked as a
+;; standalone 2-letter token regardless of the punctuation around it
+;; (comma OR dash OR semicolon all appear in real data: "Wichita, KS",
+;; "CA - Remote", "Remote, CA, US; Remote, WA, US").
 (def us-state-codes
   #{"AL" "AK" "AZ" "AR" "CA" "CO" "CT" "DE" "FL" "GA" "HI" "ID" "IL" "IN" "IA"
     "KS" "KY" "LA" "ME" "MD" "MA" "MI" "MN" "MS" "MO" "MT" "NE" "NV" "NH" "NJ"
@@ -54,8 +101,7 @@
   (or (re-find #"(?i)united states" s)
       (re-find #"(?i)\bUSA\b" s)
       (re-find #"(?i)\bU\.S\.?\b" s)
-      (boolean (some (fn [[_ code]] (us-state-codes (str/upper-case code)))
-                     (re-seq #",\s*([A-Za-z]{2})\b" s)))))
+      (boolean (some us-state-codes (re-seq #"\b[A-Z]{2}\b" s)))))
 
 (defn detect-jurisdiction
   "First iso3 in `jobsearchops.facts/catalog` whose patterns match
@@ -103,22 +149,34 @@
   (e.g. \"employer-direct\" for a company's own official job board)."
   [{:keys [id title company_name location content absolute_url updated_at]} source]
   (when-let [iso3 (detect-jurisdiction (:name location))]
-    (let [plain (strip-html content)]
-      {:id (str "gh-" id)
-       :title title
-       :employer company_name
-       :source source
-       :source-url absolute_url
-       :source-updated-at updated_at
-       :ad-content-discriminatory? (discriminatory-heuristic? (str title " " plain))
-       :source-vacancy-closed? false
-       :requires-source-consent? false
-       :source-consent-verified? false
-       :published? false :delisted? false
-       :jurisdiction iso3 :status :ingested
-       ;; see ns docstring -- wage-judgment deferred, generate.cljs
-       ;; assesses this posting but skips :posting/publish for it.
-       :compensation-verified? false})))
+    (let [plain (strip-html content)
+          wage-range (extract-hourly-range (str title " " plain))]
+      (cond-> {:id (str "gh-" id)
+               :title title
+               :employer company_name
+               :source source
+               :source-url absolute_url
+               :source-updated-at updated_at
+               :ad-content-discriminatory? (discriminatory-heuristic? (str title " " plain))
+               :source-vacancy-closed? false
+               :requires-source-consent? false
+               :source-consent-verified? false
+               :published? false :delisted? false
+               :jurisdiction iso3 :status :ingested
+               ;; see ns docstring -- only true when the source itself
+               ;; printed an unambiguous wage range; generate.cljs
+               ;; assesses-but-does-not-publish false postings.
+               :compensation-verified? (some? wage-range)}
+        wage-range
+        (assoc :source-compensation-min (first wage-range)
+               :source-compensation-max (second wage-range)
+               ;; displayed verbatim as the source's own range -- never
+               ;; narrowed/widened, so it trivially satisfies
+               ;; jobsearchops.registry's containment check while still
+               ;; being independently re-verified there, not trusted
+               ;; blindly.
+               :displayed-compensation-min (first wage-range)
+               :displayed-compensation-max (second wage-range))))))
 
 (defn collect
   "Normalizes every job in `jobs` (a seq of Greenhouse API job maps)

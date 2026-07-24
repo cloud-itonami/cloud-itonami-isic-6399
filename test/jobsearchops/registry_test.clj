@@ -15,6 +15,55 @@
 (deftest compute-displayed-compensation-is-a-flat-wage-times-hours
   (is (= 240000.0 (r/compute-displayed-compensation {:source-hourly-wage 1500 :source-monthly-hours 160}))))
 
+;; -------------------- displayed-compensation-matches-claim? (RANGE shape) --------------------
+;; real job-board data (jobsearchops.ingest): a disclosed pay RANGE, not a
+;; committed hourly-rate x monthly-hours pair.
+
+(deftest range-shape-matches-when-displayed-equals-source-range
+  (is (r/displayed-compensation-matches-claim?
+       {:source-compensation-min 17.0 :source-compensation-max 19.0
+        :displayed-compensation-min 17.0 :displayed-compensation-max 19.0})))
+
+(deftest range-shape-matches-when-displayed-is-a-subset-of-source-range
+  (is (r/displayed-compensation-within-source-range?
+       {:source-compensation-min 17.0 :source-compensation-max 19.0
+        :displayed-compensation-min 17.5 :displayed-compensation-max 18.5})))
+
+(deftest range-shape-mismatches-when-displayed-exceeds-source-max
+  (is (not (r/displayed-compensation-within-source-range?
+            {:source-compensation-min 17.0 :source-compensation-max 19.0
+             :displayed-compensation-min 17.0 :displayed-compensation-max 25.0}))))
+
+(deftest range-shape-mismatches-when-displayed-undercuts-source-min
+  (is (not (r/displayed-compensation-within-source-range?
+            {:source-compensation-min 17.0 :source-compensation-max 19.0
+             :displayed-compensation-min 10.0 :displayed-compensation-max 19.0}))))
+
+(deftest range-shape-mismatches-when-displayed-range-missing
+  (is (not (r/displayed-compensation-within-source-range?
+            {:source-compensation-min 17.0 :source-compensation-max 19.0}))))
+
+(deftest range-shape-takes-priority-over-exact-shape-when-both-present
+  ;; a posting should never carry both shapes, but if it somehow does,
+  ;; range-shaped? dispatch must be deterministic, not silently fall
+  ;; through to the exact-shape arithmetic.
+  (is (r/displayed-compensation-matches-claim?
+       {:source-compensation-min 17.0 :source-compensation-max 19.0
+        :displayed-compensation-min 17.0 :displayed-compensation-max 19.0
+        :source-hourly-wage 999 :source-monthly-hours 999 :displayed-compensation 1.0})))
+
+;; ----------------------------- compensation-summary -----------------------------
+
+(deftest compensation-summary-describes-exact-shape
+  (is (= "displayed=240000.0 independent-recompute=240000.0"
+         (r/compensation-summary {:source-hourly-wage 1500 :source-monthly-hours 160
+                                   :displayed-compensation 240000.0}))))
+
+(deftest compensation-summary-describes-range-shape
+  (is (= "displayed=[17.0,19.0] source-range=[17.0,19.0]"
+         (r/compensation-summary {:source-compensation-min 17.0 :source-compensation-max 19.0
+                                   :displayed-compensation-min 17.0 :displayed-compensation-max 19.0}))))
+
 ;; ----------------------------- register-publication -----------------------------
 
 (deftest publication-is-a-draft-not-a-real-publication
