@@ -12,7 +12,7 @@
 
 (def nbb "../../../../node_modules/.bin/nbb")
 (def classpath
-  "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src")
+  "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src")
 
 (defn- generate! [& args]
   (cp/execFileSync nbb (clj->js (concat ["--classpath" classpath "generate.cljs"] args))

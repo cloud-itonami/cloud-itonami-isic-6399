@@ -19,7 +19,7 @@
 ;;
 ;; Run (from this web/ directory, inside the monorepo checkout):
 ;;   ../../../../node_modules/.bin/nbb \
-;;     --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
+;;     --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
 ;;     generate.cljs
 (require '[clojure.edn :as edn]
          '[clojure.string :as cstr]
