@@ -1,16 +1,23 @@
 (ns jobsearchops.ingest
-  "Pure normalization: one real Greenhouse Job Board API job record ->
-  this actor's posting-record shape (see `postings.example.edn`). No
+  "Pure normalization: one real job-board-API job record -> this
+  actor's posting-record shape (see `postings.example.edn`). No
   network I/O lives here (that's `web/collect.cljs`) so this is
   unit-testable in isolation, same split as `jobsearchops.registry`
   keeping ground-truth math separate from the graph that calls it.
 
-  Greenhouse's Job Board API (https://developers.greenhouse.io/job-
-  board.html) is public, unauthenticated, read-only, and documented
-  BY Greenhouse for exactly this kind of external aggregation/embedding
-  -- every employer using it has already chosen to publish these jobs
-  for programmatic consumption. No scraping, no bot-detection evasion,
-  no ToS violation.
+  TWO PLATFORMS, both public/unauthenticated/documented-by-the-vendor
+  for exactly this kind of external aggregation -- no scraping, no
+  bot-detection evasion, no ToS violation, every employer using either
+  has already chosen to publish its postings this way:
+    - Greenhouse Job Board API (https://developers.greenhouse.io/job-
+      board.html) -- `job->posting`, id prefix \"gh-\".
+    - Lever Postings API (https://github.com/lever/postings-api) --
+      `lever-job->posting`, id prefix \"lv-\". Lever's own `country`
+      field is an ISO alpha-2 code disclosed directly by the source,
+      preferred over free-text location parsing when present (see
+      `detect-jurisdiction`) -- more reliable than Greenhouse's
+      free-text `location.name`, which has no equivalent structured
+      field.
 
   COMPENSATION: this actor's ORIGINAL `:source-hourly-wage`/
   `:source-monthly-hours` fields are documented (postings.example.edn)
@@ -103,15 +110,28 @@
       (re-find #"(?i)\bU\.S\.?\b" s)
       (boolean (some us-state-codes (re-seq #"\b[A-Z]{2}\b" s)))))
 
+(def alpha2->iso3
+  "ISO 3166-1 alpha-2 -> alpha-3, only for the jurisdictions this
+  actor covers (`jobsearchops.facts/catalog`). For a source that
+  discloses a clean country code directly (Lever's own `country`
+  field) -- exact-matched, bypassing free-text location parsing
+  entirely, so more reliable than `location-name` regex matching when
+  available."
+  {"JP" "JPN" "GB" "GBR" "DE" "DEU" "FR" "FRA" "KR" "KOR" "US" "USA"})
+
 (defn detect-jurisdiction
-  "First iso3 in `jobsearchops.facts/catalog` whose patterns match
-  `location-name`, or nil (never guessed) if none match."
-  [location-name]
-  (let [s (or location-name "")]
-    (or (some (fn [[iso3 patterns]]
-                (when (some #(re-find % s) patterns) iso3))
-              jurisdiction-patterns)
-        (when (usa-location? s) "USA"))))
+  "First iso3 in `jobsearchops.facts/catalog` matching `country-code`
+  (an ISO alpha-2 code, exact-matched, preferred when present) or
+  `location-name` (free text, regex-matched), or nil (never guessed)
+  if neither matches."
+  ([location-name] (detect-jurisdiction location-name nil))
+  ([location-name country-code]
+   (or (get alpha2->iso3 country-code)
+       (let [s (or location-name "")]
+         (or (some (fn [[iso3 patterns]]
+                     (when (some #(re-find % s) patterns) iso3))
+                   jurisdiction-patterns)
+             (when (usa-location? s) "USA"))))))
 
 (def discriminatory-pattern
   "Coarse, DOCUMENTED-as-heuristic pre-screen for ad content relying
@@ -139,6 +159,40 @@
         (str/replace #"\s+" " ")
         str/trim)))
 
+(defn- assemble-posting
+  "Shared posting-record assembly once a platform-specific normalizer
+  has extracted id/title/employer/source-url/updated-at/iso3 and the
+  plain text to scan for wage/discriminatory-content signals. Not
+  public -- `job->posting`/`lever-job->posting` are the entry points."
+  [{:keys [id title employer source source-url source-updated-at iso3 scan-text]}]
+  (let [wage-range (extract-hourly-range scan-text)]
+    (cond-> {:id id
+             :title title
+             :employer employer
+             :source source
+             :source-url source-url
+             :source-updated-at source-updated-at
+             :ad-content-discriminatory? (discriminatory-heuristic? scan-text)
+             :source-vacancy-closed? false
+             :requires-source-consent? false
+             :source-consent-verified? false
+             :published? false :delisted? false
+             :jurisdiction iso3 :status :ingested
+             ;; see ns docstring -- only true when the source itself
+             ;; printed an unambiguous wage range; generate.cljs
+             ;; assesses-but-does-not-publish false postings.
+             :compensation-verified? (some? wage-range)}
+      wage-range
+      (assoc :source-compensation-min (first wage-range)
+             :source-compensation-max (second wage-range)
+             ;; displayed verbatim as the source's own range -- never
+             ;; narrowed/widened, so it trivially satisfies
+             ;; jobsearchops.registry's containment check while still
+             ;; being independently re-verified there, not trusted
+             ;; blindly.
+             :displayed-compensation-min (first wage-range)
+             :displayed-compensation-max (second wage-range)))))
+
 (defn job->posting
   "Normalizes one Greenhouse Job Board API job (as parsed EDN/JSON,
   keyword keys) into this actor's posting-record shape, or nil if the
@@ -149,55 +203,67 @@
   (e.g. \"employer-direct\" for a company's own official job board)."
   [{:keys [id title company_name location content absolute_url updated_at]} source]
   (when-let [iso3 (detect-jurisdiction (:name location))]
-    (let [plain (strip-html content)
-          wage-range (extract-hourly-range (str title " " plain))]
-      (cond-> {:id (str "gh-" id)
-               :title title
-               :employer company_name
-               :source source
-               :source-url absolute_url
-               :source-updated-at updated_at
-               :ad-content-discriminatory? (discriminatory-heuristic? (str title " " plain))
-               :source-vacancy-closed? false
-               :requires-source-consent? false
-               :source-consent-verified? false
-               :published? false :delisted? false
-               :jurisdiction iso3 :status :ingested
-               ;; see ns docstring -- only true when the source itself
-               ;; printed an unambiguous wage range; generate.cljs
-               ;; assesses-but-does-not-publish false postings.
-               :compensation-verified? (some? wage-range)}
-        wage-range
-        (assoc :source-compensation-min (first wage-range)
-               :source-compensation-max (second wage-range)
-               ;; displayed verbatim as the source's own range -- never
-               ;; narrowed/widened, so it trivially satisfies
-               ;; jobsearchops.registry's containment check while still
-               ;; being independently re-verified there, not trusted
-               ;; blindly.
-               :displayed-compensation-min (first wage-range)
-               :displayed-compensation-max (second wage-range))))))
+    (let [plain (strip-html content)]
+      (assemble-posting {:id (str "gh-" id) :title title :employer company_name
+                          :source source :source-url absolute_url
+                          :source-updated-at updated_at :iso3 iso3
+                          :scan-text (str title " " plain)}))))
+
+(defn lever-job->posting
+  "Normalizes one Lever Postings API job (as parsed EDN/JSON, keyword
+  keys) into this actor's posting-record shape, or nil if unmatched --
+  same contract as `job->posting`. Lever's own `country` (ISO
+  alpha-2) is preferred for jurisdiction detection over its free-text
+  `categories.location` -- see `detect-jurisdiction`.
+
+  `employer` is supplied by the caller (Lever's per-job payload has no
+  company-name field of its own -- the board token IS the company,
+  known from `web/sources.edn`, not from the API response). `source`
+  is the same operator-supplied provenance tag `job->posting` takes."
+  [{:keys [id text categories country descriptionPlain hostedUrl createdAt]} employer source]
+  (when-let [iso3 (detect-jurisdiction (:location categories) country)]
+    (assemble-posting {:id (str "lv-" id) :title text :employer employer
+                        :source source :source-url hostedUrl
+                        :source-updated-at createdAt :iso3 iso3
+                        :scan-text (str text " " descriptionPlain)})))
 
 (defn collect
-  "Normalizes every job in `jobs` (a seq of Greenhouse API job maps)
-  for `source`, dropping jurisdiction-unmatched jobs. Returns
-  {:postings [...] :skipped-count n} -- the skip count is reported,
-  never silently dropped (coverage reported honestly, same discipline
-  `jobsearchops.facts`'s own ns docstring commits to)."
-  [jobs source]
-  (let [normalized (keep #(job->posting % source) jobs)]
+  "Normalizes every job in `jobs` per `opts`, dropping jurisdiction-
+  unmatched jobs. Returns {:postings [...] :skipped-count n} -- the
+  skip count is reported, never silently dropped (coverage reported
+  honestly, same discipline `jobsearchops.facts`'s own ns docstring
+  commits to).
+
+  `opts` is {:platform :greenhouse | :lever (default :greenhouse)
+             :source \"employer-direct\" | ...
+             :employer \"Company Name\"}   ; :lever only"
+  [jobs {:keys [platform source employer] :or {platform :greenhouse}}]
+  (let [normalize (case platform
+                     :greenhouse #(job->posting % source)
+                     :lever #(lever-job->posting % employer source))
+        normalized (keep normalize jobs)]
     {:postings (vec normalized)
      :skipped-count (- (count jobs) (count normalized))}))
 
+(def connector-id-prefixes
+  "Every id prefix a `collect` normalizer stamps on. `close-vanished`
+  only ever manages postings under one of these -- an operator's own
+  hand-authored postings (postings.example.edn-style) never carry
+  one, and are left untouched regardless of shape."
+  ["gh-" "lv-"])
+
+(defn- connector-managed? [{:keys [id]}]
+  (boolean (some #(str/starts-with? id %) connector-id-prefixes)))
+
 (defn close-vanished
   "Given `previous-postings` (this connector's own prior output, i.e.
-  every posting in the old `web/postings.edn` whose `:id` starts with
-  \"gh-\") and `fresh-postings` (this run's `collect` output for the
-  SAME source), returns fresh-postings plus every previously-collected
-  posting no longer present in this run, carried forward with
-  `:source-vacancy-closed? true`.
+  every posting in the old `web/postings.edn` carrying one of
+  `connector-id-prefixes`) and `fresh-postings` (this run's `collect`
+  output, any platform), returns fresh-postings plus every previously-
+  collected posting no longer present in this run, carried forward
+  with `:source-vacancy-closed? true`.
 
-  Greenhouse's API only ever returns currently-OPEN postings --
+  Both platforms' APIs only ever return currently-OPEN postings --
   closed/filled roles simply disappear from the response. So a
   posting's disappearance from THIS run IS the source's own closure
   signal (not an assumption): the actor's real stale-vacancy HARD-hold
@@ -206,10 +272,9 @@
   posting-1 delisting story."
   [previous-postings fresh-postings]
   (let [fresh-ids (set (map :id fresh-postings))
-        gh? #(str/starts-with? (:id %) "gh-")
         vanished (->> previous-postings
-                      (filter gh?)
+                      (filter connector-managed?)
                       (remove #(fresh-ids (:id %)))
                       (map #(assoc % :source-vacancy-closed? true)))
-        kept-non-gh (remove gh? previous-postings)]
-    (vec (concat kept-non-gh vanished fresh-postings))))
+        kept-non-connector (remove connector-managed? previous-postings)]
+    (vec (concat kept-non-connector vanished fresh-postings))))
