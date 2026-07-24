@@ -72,21 +72,48 @@
 
 (defn- violations-of [run] (get-in run [:state :verdict :violations]))
 
-(def held
-  (if operator-postings
-    ;; OPERATOR MODE: assess + publish every posting; the governor decides.
-    ;; An assess-time hold (e.g. an uncatalogued jurisdiction) is reported
-    ;; with its own verdict and the publish attempt is skipped.
+;; OPERATOR MODE, per posting: assess through the real actor always;
+;; publish only when the posting's own record claims verified
+;; compensation ground truth. A posting ingested by web/collect.cljs
+;; (jobsearchops.ingest) carries :compensation-verified? false --
+;; real-world postings almost never state a committed monthly-hours
+;; figure alongside an hourly rate, and inventing the missing half
+;; here to force a publish attempt would be exactly the fabricated-
+;; ground-truth problem this actor's governor exists to catch, just
+;; moved upstream of where it could catch it (see jobsearchops.ingest's
+;; ns docstring). Records without the key at all (hand-authored
+;; postings.example.edn-style files) default to verified=true, the
+;; original behavior, so existing operator forks are unaffected.
+(defn- compensation-verified? [p]
+  (not (false? (:compensation-verified? p))))
+
+;; Each posting resolves to exactly one of :held (assess or publish
+;; HARD-hold, real governor verdict), :pending (assessed clean through
+;; the real actor, but not yet offered for publication -- see
+;; compensation-verified? above) or nil (published; ends up in
+;; live-index via the post-run store state below).
+(def operator-results
+  (when operator-postings
     (vec
-     (keep (fn [{:keys [id] :as _p}]
+     (keep (fn [{:keys [id] :as p}]
              (let [a (exec! (str id "-assess") {:op :jurisdiction/assess :subject id})]
-               (if (= :hold (get-in a [:state :disposition]))
-                 {:posting (store/posting db id) :violations (violations-of a)
+               (cond
+                 (= :hold (get-in a [:state :disposition]))
+                 {:kind :held :posting (store/posting db id) :violations (violations-of a)
                   :note "法域アセスメント時点で拒否"}
+
+                 (not (compensation-verified? p))
+                 {:kind :pending :posting (store/posting db id)}
+
+                 :else
                  (let [r (exec! (str id "-publish") {:op :posting/publish :subject id})]
                    (when (= :hold (get-in r [:state :disposition]))
-                     {:posting (store/posting db id) :violations (violations-of r)})))))
-           (sort-by :id operator-postings)))
+                     {:kind :held :posting (store/posting db id) :violations (violations-of r)})))))
+           (sort-by :id operator-postings)))))
+
+(def held
+  (if operator-postings
+    (vec (filter #(= :held (:kind %)) operator-results))
 
     ;; DEMO MODE: the same lifecycle jobsearchops.sim walks.
     (do
@@ -142,6 +169,15 @@
                         :note "二重掲載の試行"}
                        {:posting (store/posting db "posting-6") :violations (violations-of no-consent)
                         :note "本人同意なし referral の試行"}]))))))
+
+;; Real postings web/collect.cljs ingested and assessed clean through
+;; the real actor, but did not attempt to publish (compensation ground
+;; truth unverified -- see compensation-verified? above). Demo mode has
+;; none of these; the demo's own postings all carry full ground truth.
+(def collected-pending
+  (if operator-postings
+    (vec (filter #(= :pending (:kind %)) operator-results))
+    []))
 
 ;; -- post-run state -----------------------------------------------------------
 
@@ -318,6 +354,29 @@
               [:td (into [:span] (for [v violations] [:span [:span.badge.hold (name (:rule v))] " "]))]
               [:td (cstr/join " / " (map :detail violations))]]))]
 
+    (when (seq collected-pending)
+      [:div
+       [:h2 "実データ収集 — " (count collected-pending) " 件、賃金審査待ち(未掲載)"]
+       [:p [:code "web/collect.cljs"] " が実在企業の公開求人API(Greenhouse Job Board API、"
+        "認証不要・スクレイピングなし)から取得し、実 actor の "
+        [:code ":jurisdiction/assess"] " を通過した実求人です。"
+        [:strong "掲載(publish)は試行していません"] " — 求人元は時給レンジは開示しても"
+        "月間労働時間まではコミットしないため、このactorの「時給×月間時間=表示賃金」"
+        "という厳密な整合性チェックを満たす根拠がまだありません。ここで欠けている数値を"
+        "こちら側で推定して埋めることは、まさにこのactorが防ごうとしている不正確な"
+        "賃金表示そのものになるため、賃金の裏付けが取れるまで意図的に掲載を保留しています。"]
+       [:table
+        [:thead [:tr [:th "求人票(サンプル)"] [:th "法域"] [:th "求人元"]]]
+        (into [:tbody]
+              (for [{:keys [posting]} (take 30 collected-pending)]
+                [:tr
+                 [:td [:a {:href (:source-url posting)} (:title posting)]]
+                 [:td (:jurisdiction posting)]
+                 [:td (:employer posting)]]))]
+       (when (> (count collected-pending) 30)
+         [:p.meta (count collected-pending) " 件中 30 件を表示(残り "
+          (- (count collected-pending) 30) " 件は省略)。"])])
+
     (when (seq referrals)
       [:div
        [:h2 "紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)"]
@@ -372,4 +431,5 @@
 (println (str "wrote docs/index.html (live-index " (count live-index)
               ", delisted " (count delisted)
               ", held " (count held)
+              ", collected-pending " (count collected-pending)
               ", ledger " (count ledger) " facts)"))

@@ -1,10 +1,14 @@
 # Nightly regeneration -- the 的確表示義務 (keep postings accurate and
-# current) as automation: rebuild docs/ through the real actor from the
-# current posting data (web/postings.edn when an operator fork has one,
-# the demo set otherwise), verify with the headless harnesses, and
-# commit only when the rendered board actually changed. A posting whose
-# source closed since the last run is HARD-held by the stale-vacancy
-# gate on the next build and thereby leaves the index.
+# current) as automation: refresh web/postings.edn from real, live,
+# ToS-compliant open job-board sources (web/sources.edn -> web/collect.cljs
+# -> the public Greenhouse Job Board API, no auth/scraping/bot-detection
+# evasion -- see collect.cljs's own header), rebuild docs/ through the
+# real actor from that data, verify with the headless harnesses, and
+# commit only when something actually changed. A posting whose source
+# closed since the last run is HARD-held by the stale-vacancy gate (or,
+# for postings.edn's own gh-* entries, carried forward by collect.cljs
+# with :source-vacancy-closed? true the moment it disappears from its
+# source board) and thereby leaves the index.
 #
 # Fork note: this runs on the default GITHUB_TOKEN (contents: write).
 # If your org disables Actions, run the same three commands from any
@@ -38,6 +42,18 @@ jobs:
           node-version: 22
       - name: install nbb
         run: npm install nbb
+      - name: collect real postings from open job-board sources
+        working-directory: cloud-itonami/cloud-itonami-isic-6399/web
+        # Only the org's own upstream repo carries web/sources.edn -- an
+        # operator fork without it keeps using its own hand-authored
+        # postings.edn (or the demo set) untouched, same fork-safety
+        # posture as the existing $([ -f postings.edn ]) check below.
+        run: |
+          if [ -f sources.edn ]; then
+            npx nbb --classpath "../src" collect.cljs
+          else
+            echo "no sources.edn -- skipping real-data collection"
+          fi
       - name: regenerate through the real actor
         working-directory: cloud-itonami/cloud-itonami-isic-6399/web
         # npx resolves the workspace-root node_modules regardless of the
@@ -59,11 +75,15 @@ jobs:
           fi
       - name: commit when changed
         working-directory: cloud-itonami/cloud-itonami-isic-6399
+        # web/postings.edn is staged too when present -- it's collect.cljs's
+        # own state (the baseline next run's close-vanished diffs against
+        # to detect source-side closures), not just a build artifact.
         run: |
-          if ! git diff --quiet docs/; then
+          if ! git diff --quiet docs/ web/postings.edn 2>/dev/null; then
             git config user.name "regenerate-board[bot]"
             git config user.email "noreply@github.com"
             git add docs/
+            [ -f web/postings.edn ] && git add web/postings.edn
             git commit -m "chore(board): nightly regeneration through the actor (的確表示)"
             git push
           else
