@@ -34,6 +34,7 @@
 ;; (CI / worktree など monorepo 以外のレイアウト用)。
 (require '[clojure.edn :as edn]
          '[clojure.string :as cstr]
+         '[css.core :as css]
          '[jp-go-dds.core :as dds]
          '[jp-go-dds.page :as page]
          '[langgraph.graph :as g]
@@ -215,65 +216,79 @@
 ;; (kotoba-uiux 規約)。レイアウトの土台は dds-ext-*(jp-go-dds.core/ext-css)。
 ;; select は上流 DADS の vendored subset に無い(dds.css に .dads-select が
 ;; 無い)ので、.dads-input-text__input と寸法・境界・focus を揃える。
-(def app-css
-  (str
-   ".mjs-header{padding-block:2.5rem 0}"
-   ".mjs-header .dads-heading{margin:0 0 .5rem}"
-   ".mjs-lead{color:var(--color-neutral-solid-gray-700);line-height:1.7;margin:.75rem 0 0}"
-   ".mjs-pitch{margin-block:2rem}"
-   ".mjs-pitch .dads-heading{margin:0 0 .75rem}"
-   ".mjs-pitch p{margin:0 0 .75rem;line-height:1.8}"
-   ".mjs-pitch .dads-table{margin-block:1rem}"
-   ".mjs-ctarow{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}"
-   ".mjs-fine{color:var(--color-neutral-solid-gray-600);font-size:.8125rem;"
-   "line-height:1.8;margin-top:1rem}"
-   ".mjs-search{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.5rem}"
-   ".mjs-search .dads-form-control-label{flex:1;min-width:12rem}"
-   ".mjs-select{box-sizing:border-box;width:100%;height:3rem;"
-   "border:1px solid var(--color-neutral-solid-gray-600);"
-   "background-color:var(--color-neutral-white);"
-   "padding:calc(12 / 16 * 1rem) calc(16 / 16 * 1rem);"
-   "border-radius:calc(8 / 16 * 1rem);color:var(--color-neutral-solid-gray-900);"
-   "font:inherit;line-height:1}"
-   "@media (hover: hover){.mjs-select:hover{border-color:var(--color-neutral-black)}}"
-   ".mjs-select:focus-visible{outline:calc(4 / 16 * 1rem) solid var(--color-neutral-black);"
-   "outline-offset:calc(2 / 16 * 1rem);"
-   "box-shadow:0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300)}"
-   ".dads-input-text__input{width:100%}"
+(def app-rules
+  [[".mjs-header" {:padding-block "2.5rem 0"}]
+   [".mjs-header .dads-heading" {:margin "0 0 .5rem"}]
+   [".mjs-lead" {:color "var(--color-neutral-solid-gray-700)" :line-height 1.7
+                 :margin ".75rem 0 0"}]
+   [".mjs-pitch" {:margin-block "2rem"}]
+   [".mjs-pitch .dads-heading" {:margin "0 0 .75rem"}]
+   [".mjs-pitch p" {:margin "0 0 .75rem" :line-height 1.8}]
+   [".mjs-pitch .dads-table" {:margin-block "1rem"}]
+   [".mjs-ctarow" {:display "flex" :gap ".75rem" :flex-wrap "wrap" :margin-top "1.25rem"}]
+   [".mjs-fine" {:color "var(--color-neutral-solid-gray-600)" :font-size ".8125rem"
+                 :line-height 1.8 :margin-top "1rem"}]
+   [".mjs-search" {:display "flex" :gap ".75rem" :flex-wrap "wrap"
+                   :align-items "flex-end" :margin-bottom "1.5rem"}]
+   [".mjs-search .dads-form-control-label" {:flex 1 :min-width "12rem"}]
+   ;; select は上流 DADS の vendored subset に無い(dds.css に .dads-select が
+   ;; 無い)ので、.dads-input-text__input と寸法・境界・focus を揃える。
+   [".mjs-select" {:box-sizing "border-box" :width "100%" :height "3rem"
+                   :border "1px solid var(--color-neutral-solid-gray-600)"
+                   :background-color "var(--color-neutral-white)"
+                   :padding "calc(12 / 16 * 1rem) calc(16 / 16 * 1rem)"
+                   :border-radius "calc(8 / 16 * 1rem)"
+                   :color "var(--color-neutral-solid-gray-900)"
+                   :font "inherit" :line-height 1}]
+   [".mjs-select:focus-visible" {:outline "calc(4 / 16 * 1rem) solid var(--color-neutral-black)"
+                                 :outline-offset "calc(2 / 16 * 1rem)"
+                                 :box-shadow "0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300)"}]
+   [".dads-input-text__input" {:width "100%"}]
    ;; 検索結果カードは search.cljs が実行時に注入する(dds-ext-card + mjs-card)
-   "#results{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));"
-   "gap:1rem;margin-top:1rem}"
-   "#results>*{min-width:0}"
-   ".mjs-card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;"
-   "align-items:baseline;flex-wrap:wrap}"
-   ".mjs-card .meta{color:var(--color-neutral-solid-gray-600);font-size:.8125rem;line-height:1.7}"
-   ".mjs-card .pay{margin-top:.35rem;font-size:.875rem;line-height:1.7}"
-   ".mjs-card .chip{display:inline-block;font-size:.75rem;padding:.05rem .5rem;"
-   "border-radius:1rem;border:1px solid var(--color-neutral-solid-gray-300);"
-   "color:var(--color-neutral-solid-gray-700)}"
-   ".mjs-empty{color:var(--color-neutral-solid-gray-600);margin-top:1rem}"
-   ".mjs-delisted{color:var(--color-neutral-solid-gray-600);font-size:.875rem;"
-   "line-height:1.8;margin-top:1rem}"
-   ".mjs-delisted>span{display:block}"
-   ".mjs-hold-rules>span{display:block;margin-block:.15rem}"
+   ["#results" {:display "grid"
+                :grid-template-columns "repeat(auto-fill,minmax(18rem,1fr))"
+                :gap "1rem" :margin-top "1rem"}]
+   ["#results>*" {:min-width 0}]
+   [".mjs-card h3" {:margin "0 0 .35rem" :font-size "1rem" :display "flex"
+                    :gap ".5rem" :align-items "baseline" :flex-wrap "wrap"}]
+   [".mjs-card .meta" {:color "var(--color-neutral-solid-gray-600)"
+                       :font-size ".8125rem" :line-height 1.7}]
+   [".mjs-card .pay" {:margin-top ".35rem" :font-size ".875rem" :line-height 1.7}]
+   [".mjs-card .chip" {:display "inline-block" :font-size ".75rem"
+                       :padding ".05rem .5rem" :border-radius "1rem"
+                       :border "1px solid var(--color-neutral-solid-gray-300)"
+                       :color "var(--color-neutral-solid-gray-700)"}]
+   [".mjs-empty" {:color "var(--color-neutral-solid-gray-600)" :margin-top "1rem"}]
+   [".mjs-delisted" {:color "var(--color-neutral-solid-gray-600)"
+                     :font-size ".875rem" :line-height 1.8 :margin-top "1rem"}]
+   [".mjs-delisted>span" {:display "block"}]
+   [".mjs-hold-rules>span" {:display "block" :margin-block ".15rem"}]
    ;; チップのラベルを途中で折り返さない。.dads-table は overflow-x:auto。
-   ".dads-table .dads-chip-label{white-space:nowrap}"
-   ".mjs-referrals{line-height:1.9;padding-left:1.25rem;margin-top:1rem}"
+   [".dads-table .dads-chip-label" {:white-space "nowrap"}]
+   [".mjs-referrals" {:line-height 1.9 :padding-left "1.25rem" :margin-top "1rem"}]
    ;; 台帳は等幅。横に長いので自身の中でだけ横スクロールさせる
-   "pre{font-family:var(--font-family-mono);font-size:.8125rem;line-height:1.7;"
-   "background:var(--color-neutral-solid-gray-50);"
-   "border:1px solid var(--color-neutral-solid-gray-200);border-radius:8px;"
-   "padding:1rem;overflow-x:auto;margin-top:1rem}"
-   ".mjs-guarantees{line-height:1.9;padding-left:1.25rem;margin:0}"
-   ".mjs-footer{border-top:1px solid var(--color-neutral-solid-gray-200);"
-   "margin-top:3rem;padding-block:1.5rem 3rem;"
-   "color:var(--color-neutral-solid-gray-600);font-size:.875rem;line-height:1.8}"
-   ".mjs-footer p{margin:0 0 .75rem}"
-   ".mjs-footer .cta{font-size:.9375rem;font-weight:700;"
-   "color:var(--color-neutral-solid-gray-900)}"
-   "code{font-family:var(--font-family-mono);background:var(--color-neutral-solid-gray-50);"
-   "border:1px solid var(--color-neutral-solid-gray-200);border-radius:4px;"
-   "padding:1px 5px;font-size:.9em}"))
+   ["pre" {:font-family "var(--font-family-mono)" :font-size ".8125rem"
+           :line-height 1.7 :background "var(--color-neutral-solid-gray-50)"
+           :border "1px solid var(--color-neutral-solid-gray-200)"
+           :border-radius 8 :padding "1rem" :overflow-x "auto" :margin-top "1rem"}]
+   [".mjs-guarantees" {:line-height 1.9 :padding-left "1.25rem" :margin 0}]
+   [".mjs-footer" {:border-top "1px solid var(--color-neutral-solid-gray-200)"
+                   :margin-top "3rem" :padding-block "1.5rem 3rem"
+                   :color "var(--color-neutral-solid-gray-600)"
+                   :font-size ".875rem" :line-height 1.8}]
+   [".mjs-footer p" {:margin "0 0 .75rem"}]
+   [".mjs-footer .cta" {:font-size ".9375rem" :font-weight 700
+                        :color "var(--color-neutral-solid-gray-900)"}]
+   ["code" {:font-family "var(--font-family-mono)"
+            :background "var(--color-neutral-solid-gray-50)"
+            :border "1px solid var(--color-neutral-solid-gray-200)"
+            :border-radius 4 :padding "1px 5px" :font-size ".9em"}]])
+
+(def app-media
+  {"(hover: hover)"
+   [[".mjs-select:hover" {:border-color "var(--color-neutral-black)"}]]})
+
+(def app-css (css/css {:rules app-rules :media app-media}))
 
 ;; 判定バッジは DADS chip-label(filled-1)。
 (defn- chip [label color] (dds/chip-label label {:color color :style "filled-1"}))
@@ -456,6 +471,9 @@
   [[:script {:type "application/json" :id "postings-data"}
     (js/JSON.stringify (clj->js (mapv posting->json-entry live-index)))]
    [:script {:src "https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"}]
+   ;; search.cljs は hiccup を html.core で文字列化する(生 HTML を書かない)ので、
+   ;; そのライブラリもブラウザへ同梱する。読み込み順は依存順。
+   [:script {:type "application/x-scittle" :src "html_core.cljs"}]
    [:script {:type "application/x-scittle" :src "search.cljs"}]])
 
 (fs/mkdirSync "../docs" #js {:recursive true})
@@ -471,6 +489,10 @@
        scripts)
       "\n"))
 (fs/copyFileSync "search.cljs" "../docs/search.cljs")
+;; ブラウザ側 .cljs はコピーするだけ(ビルド無し)。
+(def html-root
+  (or (some-> js/process.env.KOTOBA_HTML_ROOT not-empty) "../../../kotoba-lang/html"))
+(fs/copyFileSync (str html-root "/src/html/core.cljc") "../docs/html_core.cljs")
 (println (str "wrote docs/index.html (live-index " (count live-index)
               ", delisted " (count delisted)
               ", held " (count held)

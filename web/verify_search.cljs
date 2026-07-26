@@ -9,7 +9,11 @@
 ;;
 ;; Run (from this web/ directory):
 ;;   ../../../../node_modules/.bin/nbb verify_search.cljs
-(require '["fs" :as fs])
+;; search.cljs は hiccup を html.core で文字列化する。load-string の中で
+;; ns の :require を解決させると nbb では落ちるので、ここで先に読み込んでおく
+;; (search.cljs 側は完全修飾 html.core/->html で呼ぶ)。
+(require '["fs" :as fs]
+         '[html.core])
 
 (def html (fs/readFileSync "../docs/index.html" "utf8"))
 
