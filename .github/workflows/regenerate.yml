@@ -71,7 +71,7 @@ jobs:
           if [ -f postings.edn ]; then
             grep -q '監査台帳' ../docs/index.html && echo "operator board sanity ok"
           else
-            npx nbb verify_search.cljs
+            npx nbb --classpath "../../../kotoba-lang/html/src" verify_search.cljs
           fi
       - name: commit when changed
         working-directory: cloud-itonami/cloud-itonami-isic-6399
