@@ -2427,8 +2427,223 @@ legend.dads-form-control-label__label {
   --button-outline-hover-bg-color: var(--color-neutral-solid-gray-200);
   --button-outline-active-bg-color: var(--color-neutral-solid-gray-300);
 }
+/* --- component: select --- */
+.dads-select {
+  display: block;
+  color: var(--color-neutral-solid-gray-800);
+  font-weight: normal;
+  font-size: calc(16 / 16 * 1rem);
+  line-height: 1.7;
+  font-family: var(--font-family-sans);
+  letter-spacing: 0.02em;
+}
 
-.dds-ext-container { max-width: 64rem; margin-inline: auto; padding-inline: 1rem; }
+.dads-select__control {
+  position: relative;
+  display: block;
+  width: fit-content;
+}
+
+.dads-select__select {
+  vertical-align: middle;
+  box-sizing: border-box;
+  border-radius: calc(8 / 16 * 1rem);
+  border: 1px solid var(--color-neutral-solid-gray-600);
+  background-color: var(--color-neutral-white);
+  padding-right: calc(40 / 16 * 1rem);
+  padding-left: calc(16 / 16 * 1rem);
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  letter-spacing: inherit;
+  appearance: none;
+}
+
+.dads-select__select[data-size="sm"] {
+  height: calc(40 / 16 * 1rem);
+}
+
+.dads-select__select[data-size="md"] {
+  height: calc(48 / 16 * 1rem);
+}
+
+.dads-select__select[data-size="lg"] {
+  height: calc(56 / 16 * 1rem);
+}
+
+.dads-select__select:focus-visible {
+  outline: calc(4 / 16 * 1rem) solid var(--color-neutral-black);
+  outline-offset: calc(2 / 16 * 1rem);
+  box-shadow: 0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300);
+}
+
+@media (hover: hover) {
+  .dads-select__select:hover {
+    border-color: var(--color-neutral-black);
+  }
+}
+
+.dads-select__select:is(:user-invalid, [aria-invalid="true"]) {
+  border-color: var(--color-semantic-error-1);
+}
+
+@media (hover: hover) {
+  .dads-select__select:is(:user-invalid, [aria-invalid="true"]):hover {
+    border-color: var(--color-primitive-red-1000);
+  }
+}
+
+.dads-select__select:is(:disabled, [aria-disabled="true"]),
+.dads-select__select:is(:disabled, [aria-disabled="true"]):hover {
+  border: 1px solid var(--color-neutral-solid-gray-300);
+  background-color: var(--color-neutral-solid-gray-50);
+  color: var(--color-neutral-solid-gray-420);
+}
+
+@media (forced-colors: active) {
+  .dads-select__select {
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+
+  .dads-select__select[aria-disabled="true"],
+  .dads-select__select[aria-disabled="true"]:hover {
+    border-color: GrayText;
+    color: GrayText;
+  }
+}
+
+.dads-select__chevron {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: calc(16 / 16 * 1rem);
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: calc(16 / 16 * 1rem);
+  height: calc(16 / 16 * 1rem);
+}
+
+.dads-select__select:disabled + .dads-select__chevron {
+  color: var(--color-neutral-solid-gray-420);
+}
+
+@media (forced-colors: active) {
+  .dads-select__chevron {
+    color: ButtonText;
+  }
+
+  .dads-select__select:disabled + .dads-select__chevron {
+    color: GrayText;
+  }
+}
+
+.dads-select__error-text {
+  margin: calc(8 / 16 * 1rem) 0 0 0;
+  display: block;
+  color: var(--color-semantic-error-1);
+}
+/* --- component: link --- */
+.dads-link:any-link {
+  color: var(--color-primitive-blue-1000);
+  text-decoration: underline;
+  text-decoration-thickness: calc(1 / 16 * 1rem);
+  text-underline-offset: calc(3 / 16 * 1rem);
+}
+
+.dads-link:visited {
+  color: var(--color-primitive-magenta-900);
+}
+
+@media (hover: hover) {
+  .dads-link:hover {
+    color: var(--color-primitive-blue-900);
+    text-decoration-thickness: calc(3 / 16 * 1rem);
+  }
+}
+
+.dads-link:active {
+  color: var(--color-primitive-orange-800);
+  text-decoration-thickness: calc(1 / 16 * 1rem);
+}
+
+.dads-link:focus-visible {
+  outline: calc(4 / 16 * 1rem) solid var(--color-neutral-black);
+  outline-offset: calc(2 / 16 * 1rem);
+  border-radius: calc(4 / 16 * 1rem);
+  background-color: var(--color-primitive-yellow-300);
+  box-shadow: 0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300);
+}
+
+.dads-link__icon {
+  display: inline-block;
+  width: calc(16 / 16 * 1rem);
+  height: calc(16 / 16 * 1rem);
+  vertical-align: -0.15em;
+}
+/* --- component: list --- */
+.dads-list {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: calc(32 / 16 * 1rem);
+  list-style-type: revert;
+}
+
+.dads-list > li {
+  --_spacing: 0;
+  padding-top: var(--_spacing);
+  padding-bottom: var(--_spacing);
+}
+
+.dads-list[data-spacing="4"] > li {
+  --_spacing: calc(4 / 16 * 1rem);
+}
+
+.dads-list[data-spacing="8"] > li {
+  --_spacing: calc(8 / 16 * 1rem);
+}
+
+.dads-list[data-spacing="12"] > li {
+  --_spacing: calc(12 / 16 * 1rem);
+}
+
+.dads-list[data-marker="number"] {
+  display: grid;
+  grid-template-columns: minmax(calc(32 / 16 * 1rem), auto) 1fr;
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.dads-list[data-marker="number"] > li,
+.dads-list[data-marker="number"] > li > a {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: inherit;
+  align-items: baseline;
+}
+
+.dads-list[data-marker="number"] > li > a > span {
+  text-decoration-thickness: inherit;
+}
+
+.dads-list[data-marker="number"] > li > :not(a, span) {
+  grid-column: 2;
+}
+
+@supports (grid-template-columns: subgrid) {
+  .dads-list[data-marker="number"] > li,
+  .dads-list[data-marker="number"] > li > a {
+    grid-template-columns: subgrid;
+  }
+}
+
+.dads-list .dads-list {
+  margin-top: var(--_spacing);
+  margin-bottom: calc(-1 * var(--_spacing));
+}
+
+.dds-ext-container { max-width: 64rem; margin-inline: auto; padding-inline: max(1rem,env(safe-area-inset-left)) max(1rem,env(safe-area-inset-right)); }
 .dds-ext-section { padding-block: 3rem; border-top: 1px solid var(--color-neutral-solid-gray-200); }
 .dds-ext-section:first-of-type { border-top: none; }
 .dds-ext-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--dds-ext-grid-min,16rem),1fr)); gap: 1.5rem; }
@@ -2443,6 +2658,10 @@ legend.dads-form-control-label__label {
 body { margin: 0; background: var(--color-neutral-white); color: var(--color-neutral-solid-gray-800); font-family: var(--font-family-sans); }
 img,svg { max-width: 100%; height: auto; }
 .dads-table { max-width: 100%; min-width: 0; overflow-x: auto; }
+:root { color-scheme: light; }
+body { padding-bottom: env(safe-area-inset-bottom); }
+@media (pointer:coarse) { .dads-button,.dads-accordion__summary { min-height: 44px; } }
+@media (max-width:48rem) { .dds-ext-section { padding-block: 2rem; } .dds-ext-hero { padding-block: 2.5rem 2rem; } .dds-ext-grid { --dds-ext-grid-min: 100%; } }
 .mjs-header { padding-block: 2.5rem 0; }
 .mjs-header .dads-heading { margin: 0 0 .5rem; }
 .mjs-lead { color: var(--color-neutral-solid-gray-700); line-height: 1.7; margin: .75rem 0 0; }
@@ -2454,8 +2673,6 @@ img,svg { max-width: 100%; height: auto; }
 .mjs-fine { color: var(--color-neutral-solid-gray-600); font-size: .8125rem; line-height: 1.8; margin-top: 1rem; }
 .mjs-search { display: flex; gap: .75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.5rem; }
 .mjs-search .dads-form-control-label { flex: 1; min-width: 12rem; }
-.mjs-select { line-height: 1; box-sizing: border-box; color: var(--color-neutral-solid-gray-900); background-color: var(--color-neutral-white); width: 100%; font: inherit; padding: calc(12 / 16 * 1rem) calc(16 / 16 * 1rem); border: 1px solid var(--color-neutral-solid-gray-600); border-radius: calc(8 / 16 * 1rem); height: 3rem; }
-.mjs-select:focus-visible { outline: calc(4 / 16 * 1rem) solid var(--color-neutral-black); outline-offset: calc(2 / 16 * 1rem); box-shadow: 0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300); }
 .dads-input-text__input { width: 100%; }
 #results { display: grid; grid-template-columns: repeat(auto-fill,minmax(18rem,1fr)); gap: 1rem; margin-top: 1rem; }
 #results>* { min-width: 0; }
@@ -2474,8 +2691,7 @@ pre { line-height: 1.7; font-size: .8125rem; margin-top: 1rem; background: var(-
 .mjs-footer { border-top: 1px solid var(--color-neutral-solid-gray-200); margin-top: 3rem; padding-block: 1.5rem 3rem; color: var(--color-neutral-solid-gray-600); font-size: .875rem; line-height: 1.8; }
 .mjs-footer p { margin: 0 0 .75rem; }
 .mjs-footer .cta { font-size: .9375rem; font-weight: 700; color: var(--color-neutral-solid-gray-900); }
-code { font-family: var(--font-family-mono); background: var(--color-neutral-solid-gray-50); border: 1px solid var(--color-neutral-solid-gray-200); border-radius: 4px; padding: 1px 5px; font-size: .9em; }
-@media (hover: hover) { .mjs-select:hover { border-color: var(--color-neutral-black); } }</style></head>
+code { font-family: var(--font-family-mono); background: var(--color-neutral-solid-gray-50); border: 1px solid var(--color-neutral-solid-gray-200); border-radius: 4px; padding: 1px 5px; font-size: .9em; }</style></head>
   <body><div class="dds-ext-container"><header class="mjs-header">
     <h1 class="dads-heading" data-size="45">
       <span>Meta Job Search <span class="dads-chip-label" data-style="filled-1" data-color="green">governed</span></span>
@@ -2538,18 +2754,28 @@ code { font-family: var(--font-family-mono); background: var(--color-neutral-sol
       <span class="dads-input-text"><input id="q" type="search" autocomplete="off" placeholder="職種・雇用主・キーワードで検索…" class="dads-input-text__input" data-size="md"></span>
     </div></div>
     <div class="dads-form-control-label" data-size="md"><label class="dads-form-control-label__label" for="jur">法域</label><div>
-      <select id="jur" class="mjs-select">
-        <option value="">全法域</option>
-        <option value="USA">USA</option>
-      </select>
+      <span class="dads-select"><span class="dads-select__control">
+        <select class="dads-select__select" data-size="md" id="jur">
+          <option value="" disabled selected>全法域</option>
+          <option value="USA">USA</option>
+        </select>
+        <svg class="dads-select__chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 17L3 8L4 7L12 15L20 7L21 8L12 17Z" fill="currentcolor"></path>
+        </svg>
+      </span></span>
     </div></div>
     <div class="dads-form-control-label" data-size="md"><label class="dads-form-control-label__label" for="src">ソース</label><div>
-      <select id="src" class="mjs-select">
-        <option value="">全ソース</option>
-        <option value="employer-direct">雇用主直接</option>
-        <option value="partner-feed">提携フィード</option>
-        <option value="board-crawl">許諾クロール</option>
-      </select>
+      <span class="dads-select"><span class="dads-select__control">
+        <select class="dads-select__select" data-size="md" id="src">
+          <option value="" disabled selected>全ソース</option>
+          <option value="employer-direct">雇用主直接</option>
+          <option value="partner-feed">提携フィード</option>
+          <option value="board-crawl">許諾クロール</option>
+        </select>
+        <svg class="dads-select__chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 17L3 8L4 7L12 15L20 7L21 8L12 17Z" fill="currentcolor"></path>
+        </svg>
+      </span></span>
     </div></div>
   </div><div id="results"></div><p id="empty" class="mjs-empty" hidden>該当する求人はありません。</p></section><section class="dds-ext-section">
     <h2 class="dads-heading" data-size="32">Governor transparency — 掲載を拒否した求人票</h2>

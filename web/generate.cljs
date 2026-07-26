@@ -231,18 +231,6 @@
    [".mjs-search" {:display "flex" :gap ".75rem" :flex-wrap "wrap"
                    :align-items "flex-end" :margin-bottom "1.5rem"}]
    [".mjs-search .dads-form-control-label" {:flex 1 :min-width "12rem"}]
-   ;; select は上流 DADS の vendored subset に無い(dds.css に .dads-select が
-   ;; 無い)ので、.dads-input-text__input と寸法・境界・focus を揃える。
-   [".mjs-select" {:box-sizing "border-box" :width "100%" :height "3rem"
-                   :border "1px solid var(--color-neutral-solid-gray-600)"
-                   :background-color "var(--color-neutral-white)"
-                   :padding "calc(12 / 16 * 1rem) calc(16 / 16 * 1rem)"
-                   :border-radius "calc(8 / 16 * 1rem)"
-                   :color "var(--color-neutral-solid-gray-900)"
-                   :font "inherit" :line-height 1}]
-   [".mjs-select:focus-visible" {:outline "calc(4 / 16 * 1rem) solid var(--color-neutral-black)"
-                                 :outline-offset "calc(2 / 16 * 1rem)"
-                                 :box-shadow "0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300)"}]
    [".dads-input-text__input" {:width "100%"}]
    ;; 検索結果カードは search.cljs が実行時に注入する(dds-ext-card + mjs-card)
    ["#results" {:display "grid"
@@ -284,11 +272,7 @@
             :border "1px solid var(--color-neutral-solid-gray-200)"
             :border-radius 4 :padding "1px 5px" :font-size ".9em"}]])
 
-(def app-media
-  {"(hover: hover)"
-   [[".mjs-select:hover" {:border-color "var(--color-neutral-black)"}]]})
-
-(def app-css (css/css {:rules app-rules :media app-media}))
+(def app-css (css/css {:rules app-rules}))
 
 ;; 判定バッジは DADS chip-label(filled-1)。
 (defn- chip [label color] (dds/chip-label label {:color color :style "filled-1"}))
@@ -362,16 +346,16 @@
                        :placeholder "職種・雇用主・キーワードで検索…"}))
      (dds/form-field
       {:label "法域" :for "jur"}
-      (into [:select {:id "jur" :class "mjs-select"} [:option {:value ""} "全法域"]]
-            (for [j (sort (distinct (map :jurisdiction live-index)))]
-              [:option {:value j} j])))
+      (dds/select {:id "jur"}
+                  (into [["" "全法域"]]
+                        (for [j (sort (distinct (map :jurisdiction live-index)))] [j j]))))
      (dds/form-field
       {:label "ソース" :for "src"}
-      [:select {:id "src" :class "mjs-select"}
-       [:option {:value ""} "全ソース"]
-       [:option {:value "employer-direct"} "雇用主直接"]
-       [:option {:value "partner-feed"} "提携フィード"]
-       [:option {:value "board-crawl"} "許諾クロール"]])]
+      (dds/select {:id "src"}
+                  [["" "全ソース"]
+                   ["employer-direct" "雇用主直接"]
+                   ["partner-feed" "提携フィード"]
+                   ["board-crawl" "許諾クロール"]]))]
     [:div {:id "results"}]
     [:p {:id "empty" :class "mjs-empty" :hidden true} "該当する求人はありません。"]
     (when (seq delisted)
