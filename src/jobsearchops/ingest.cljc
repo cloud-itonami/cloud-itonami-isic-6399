@@ -252,7 +252,15 @@
   one, and are left untouched regardless of shape."
   ["gh-" "lv-"])
 
-(defn- connector-managed? [{:keys [id]}]
+(defn connector-managed?
+  "Is this posting one a `collect` normalizer produced (id under
+  `connector-id-prefixes`), as opposed to one the operator wrote by
+  hand? The only honest discriminator between the two provenances, so
+  every consumer that must not describe one as the other --
+  `close-vanished`'s carry-forward, `web/collect.cljs`, and the page's
+  own pending-postings copy -- shares this predicate instead of
+  re-deriving it."
+  [{:keys [id]}]
   (boolean (some #(str/starts-with? id %) connector-id-prefixes)))
 
 (defn close-vanished

@@ -80,8 +80,7 @@
   (fs/writeFileSync postings-path
                      (str "[" (str/join "\n " (map pr-str postings)) "]\n")))
 
-(defn- connector-managed? [{:keys [id]}]
-  (boolean (some #(str/starts-with? id %) ingest/connector-id-prefixes)))
+(def ^:private connector-managed? ingest/connector-managed?)
 
 (defn -main []
   (println "Collecting from" (count sources) "real source(s):"

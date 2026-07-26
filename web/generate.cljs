@@ -39,6 +39,8 @@
          '[jp-go-dds.page :as page]
          '[langgraph.graph :as g]
          '[jobsearchops.store :as store]
+         '[jobsearchops.registry :as registry]
+         '[jobsearchops.ingest :as ingest]
          '[jobsearchops.operation :as op]
          '["fs" :as fs])
 
@@ -182,14 +184,25 @@
                        {:posting (store/posting db "posting-6") :violations (violations-of no-consent)
                         :note "本人同意なし referral の試行"}]))))))
 
-;; Real postings web/collect.cljs ingested and assessed clean through
-;; the real actor, but did not attempt to publish (compensation ground
-;; truth unverified -- see compensation-verified? above). Demo mode has
-;; none of these; the demo's own postings all carry full ground truth.
-(def collected-pending
+;; Postings assessed clean through the real actor that did not attempt
+;; to publish (compensation ground truth unverified -- see
+;; compensation-verified? above). Demo mode has none of these; the
+;; demo's own postings all carry full ground truth.
+;;
+;; Split by provenance (`jobsearchops.ingest/connector-managed?`, the
+;; same predicate `close-vanished` carries postings forward by): a
+;; collected posting is pending because its SOURCE disclosed an hourly
+;; range without committing monthly hours, while an operator's own
+;; hand-authored posting is pending because the OPERATOR has not fixed
+;; its rate yet. Describing one with the other's reason would be a
+;; false provenance claim on this page -- the same class of inaccuracy
+;; the actor refuses to publish.
+(def pending-all
   (if operator-postings
     (vec (filter #(= :pending (:kind %)) operator-results))
     []))
+(def collected-pending (vec (filter #(ingest/connector-managed? (:posting %)) pending-all)))
+(def own-pending (vec (remove #(ingest/connector-managed? (:posting %)) pending-all)))
 
 ;; -- post-run state -----------------------------------------------------------
 
@@ -205,7 +218,22 @@
                     (str "basis=" (pr-str basis))]))
 
 (def yen (js/Intl.NumberFormat. "ja-JP"))
-(defn fmt-yen [n] (str "¥" (.format yen n) "/月"))
+
+(defn- amount
+  "`n` labelled in the currency `p` itself disclosed
+  (`jobsearchops.registry/compensation-unit`): the symbol when this
+  catalog has one, else the bare ISO 4217 code, else an explicit
+  未記載 marker -- never a symbol we merely guessed. No rate is ever
+  applied; the figure is the source's own. Rendering a JPY figure with
+  a `$` (what this page did while every RANGE posting happened to come
+  from a US board) is itself a false compensation claim on a real job
+  ad -- the 的確表示義務 class of error this actor exists to catch."
+  [p n]
+  (let [{:keys [currency symbol]} (registry/compensation-unit p)
+        s (.format yen n)]
+    (cond symbol   (str symbol s)
+          currency (str s " " currency)
+          :else    (str s " (通貨未記載)"))))
 
 (def dds-css-path
   (or (some-> js/process.env.JP_GO_DDS_CSS not-empty)
@@ -278,11 +306,15 @@
 (defn- chip [label color] (dds/chip-label label {:color color :style "filled-1"}))
 
 ;; Two ground-truth shapes reach here (jobsearchops.registry's own ns
-;; docstring): EXACT (hand-authored/demo, JPY hourly x monthly-hours)
-;; and RANGE (real job-board data -- jobsearchops.ingest, USD hourly
-;; range verbatim from the source). `fmt-yen` on a RANGE posting's nil
-;; :displayed-compensation would silently render "¥0/月" -- wrong, not
-;; just ugly -- so both fields dispatch on shape here too.
+;; docstring): EXACT (hand-authored/demo, hourly x monthly-hours, a
+;; monthly total) and RANGE (a source's own disclosed hourly range --
+;; jobsearchops.ingest for collected data, and hand-authored spot/gig
+;; postings that genuinely have no committed monthly hours to multiply
+;; by). Formatting a RANGE posting's nil :displayed-compensation as a
+;; monthly total would silently render "0/月" -- wrong, not just ugly --
+;; so both fields dispatch on shape here too, and both carry the
+;; posting's OWN currency (`amount`) rather than the USD that every
+;; collected posting happened to use.
 (defn- range-shaped? [p] (some? (:source-compensation-min p)))
 
 (defn posting->json-entry [p]
@@ -291,11 +323,13 @@
    :publication (:publication-number p)
    :correction (:correction-number p)
    :pay (if (range-shaped? p)
-          (str "$" (:displayed-compensation-min p) "–$" (:displayed-compensation-max p) "/時")
-          (fmt-yen (:displayed-compensation p)))
+          (str (amount p (:displayed-compensation-min p)) "–"
+               (amount p (:displayed-compensation-max p)) "/時")
+          (str (amount p (:displayed-compensation p)) "/月"))
    :wage (if (range-shaped? p)
-           (str "求人元開示レンジ $" (:source-compensation-min p) "–$" (:source-compensation-max p) "/時")
-           (str "時給 ¥" (.format yen (:source-hourly-wage p))
+           (str "求人元開示レンジ " (amount p (:source-compensation-min p)) "–"
+                (amount p (:source-compensation-max p)) "/時")
+           (str "時給 " (amount p (:source-hourly-wage p))
                 " × " (:source-monthly-hours p) "h"))})
 
 (def body
@@ -404,6 +438,25 @@
         [:p {:class "mjs-fine"} (count collected-pending) " 件中 30 件を表示(残り "
          (- (count collected-pending) 30) " 件は省略)。"])))
 
+   (when (seq own-pending)
+     (dds/section
+      {:title (str "自社求人 — " (count own-pending) " 件、報酬額の確定待ち(未掲載)")}
+      [:p {:class "mjs-lead"}
+       "このボードの運営者自身が出した求人のうち、"
+       [:strong "報酬額がまだ確定していないもの"] "です。実 actor の "
+       [:code ":jurisdiction/assess"] " は通過していますが、"
+       [:strong "掲載(publish)は試行していません"]
+       " — 報酬を伏せたまま、あるいは仮の数字を置いて掲載することは"
+       "的確表示義務(職業安定法5条の4)の趣旨に反するため、金額が確定するまで"
+       "意図的に保留しています。確定した時点で通常の "
+       [:code ":posting/publish"] " を通って上の掲載一覧に入ります。"]
+      (dds/table
+       {:headers ["求人票" "法域" "募集主体"]
+        :rows (for [{:keys [posting]} own-pending]
+                [[:a {:href (:source-url posting)} (:title posting)]
+                 (:jurisdiction posting)
+                 (:employer posting)])})))
+
    (when (seq referrals)
      (dds/section
       {:title "紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)"}
@@ -481,4 +534,5 @@
               ", delisted " (count delisted)
               ", held " (count held)
               ", collected-pending " (count collected-pending)
+              ", own-pending " (count own-pending)
               ", ledger " (count ledger) " facts)"))

@@ -120,6 +120,44 @@
     (str "displayed=" (:displayed-compensation posting)
          " independent-recompute=" (compute-displayed-compensation posting))))
 
+(def jurisdiction-currency
+  "iso3 -> the ISO 4217 currency the postings of that jurisdiction
+  disclose their own wage figures in. NOT a conversion table: no rate
+  is ever applied to any figure anywhere in this actor. This decides
+  only which unit label honestly names a number the SOURCE itself
+  disclosed -- a JPY hourly range rendered with a `$` sign is a false
+  compensation claim on a real job ad (的確表示義務), which is exactly
+  the class of error this actor exists to prevent, so the label is
+  ground truth carried alongside the figure rather than a presentation
+  detail left to whoever renders it. Every jurisdiction in
+  `jobsearchops.facts/catalog` has an entry."
+  {"JPN" "JPY" "USA" "USD" "GBR" "GBP" "DEU" "EUR" "FRA" "EUR" "KOR" "KRW"})
+
+(def currency-symbol
+  "ISO 4217 -> the symbol to prefix a figure with, or nil when this
+  catalog has none (then callers must show the ISO code itself rather
+  than guess a symbol)."
+  {"JPY" "¥" "USD" "$" "GBP" "£" "EUR" "€" "KRW" "₩"})
+
+(defn posting-currency
+  "The ISO 4217 currency `posting`'s own disclosed figures are in: its
+  explicit `:currency` when it carries one (a source that states its
+  own currency wins over any inference), else the currency of its own
+  `:jurisdiction`, else nil -- never a guess, and never a converted
+  amount."
+  [{:keys [currency jurisdiction]}]
+  (or (not-empty currency) (jurisdiction-currency jurisdiction)))
+
+(defn compensation-unit
+  "`{:currency iso4217-or-nil :symbol symbol-or-nil}` for `posting` --
+  the honest unit label for its own figures. A nil currency means the
+  posting's jurisdiction is outside this catalog and the posting did
+  not state one; callers must then say so rather than imply a
+  currency."
+  [posting]
+  (let [c (posting-currency posting)]
+    {:currency c :symbol (currency-symbol c)}))
+
 (defn register-publication
   "Validate + construct the POSTING-PUBLICATION registration DRAFT --
   the portal operator's own act of publishing a real posting into the
