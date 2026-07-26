@@ -14,10 +14,13 @@
       (.replaceAll "<" "&lt;")
       (.replaceAll ">" "&gt;")))
 
+;; dds-ext-card は jp-go-dds の layout 拡張(生成側の静的カードと同じ見た目)、
+;; mjs-card は本ページ固有の中身の字送り。どちらも generate.cljs 側で定義済み。
+;; governor-passed バッジは DADS の chip-label(filled-1 / green)。
 (defn- card-html [p]
-  (str "<div class=\"card\">"
+  (str "<div class=\"dds-ext-card mjs-card\">"
        "<h3>" (esc (:title p))
-       "<span class=\"badge ok\">governor-passed</span></h3>"
+       "<span class=\"dads-chip-label\" data-style=\"filled-1\" data-color=\"green\">governor-passed</span></h3>"
        "<div class=\"meta\">" (esc (:employer p)) " · " (esc (:jurisdiction p))
        " · <span class=\"chip\">" (esc (:source p)) "</span></div>"
        "<div class=\"pay\">" (esc (:pay p))

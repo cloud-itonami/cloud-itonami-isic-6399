@@ -166,10 +166,20 @@ real generated page.
 
 ```bash
 cd web && ../../../../node_modules/.bin/nbb \
-  --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
+  --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
   generate.cljs          # regenerate docs/index.html + docs/search.cljs
 ../../../../node_modules/.bin/nbb verify_search.cljs   # headless UI logic check
 ```
+
+UI は [デジタル庁デザインシステム(DADS)](https://github.com/kotoba-lang/jp-go-digital-design-system)
+を使っています（モノレポ標準の `kotoba-ui` からの明示的な opt-out。理由は
+superproject **ADR-2607261600**: この actor は職業安定法5条の4（的確表示義務）を
+ソフトウェアとして実装しており、日本の公的サービスの視覚言語に揃える方が
+利用者の信頼判断に効く）。DADS は **light mode 固定**（上流デジタル庁に dark
+palette が無い）なので、移行前の `prefers-color-scheme` による dark 対応は
+意図的に落としています。`web/generate.cljs` が読む vendored `dds.css` のパスは、
+monorepo 以外のレイアウト（CI / git worktree）からは環境変数 `JP_GO_DDS_CSS`
+で上書きできます。
 
 ## No robotics
 
