@@ -1,5 +1,6 @@
 (ns jobsearchops.registry-test
   (:require [clojure.test :refer [deftest is]]
+            [jobsearchops.facts]
             [jobsearchops.registry :as r]))
 
 ;; ----------------------------- displayed-compensation-matches-claim? -----------------------------
@@ -148,3 +149,34 @@
   (is (thrown? Exception (r/register-referral "posting-1" "" "a" 0)))
   (is (thrown? Exception (r/register-referral "posting-1" "JPN" "" 0)))
   (is (thrown? Exception (r/register-referral "posting-1" "JPN" "a" -1))))
+
+;; ----------------------------- compensation currency -----------------------------
+;; A JPY figure rendered with a `$` sign is a false compensation claim
+;; on a real job ad (的確表示義務) -- the unit label is ground truth
+;; carried with the figure, not a presentation detail.
+
+(deftest currency-comes-from-the-postings-own-jurisdiction
+  (is (= "JPY" (r/posting-currency {:jurisdiction "JPN"})))
+  (is (= "USD" (r/posting-currency {:jurisdiction "USA"})))
+  (is (= "EUR" (r/posting-currency {:jurisdiction "DEU"})))
+  (is (= "EUR" (r/posting-currency {:jurisdiction "FRA"})))
+  (is (= "GBP" (r/posting-currency {:jurisdiction "GBR"})))
+  (is (= "KRW" (r/posting-currency {:jurisdiction "KOR"}))))
+
+(deftest an-explicit-currency-wins-over-the-jurisdictions
+  (is (= "USD" (r/posting-currency {:jurisdiction "JPN" :currency "USD"}))))
+
+(deftest an-empty-currency-string-falls-back-and-never-labels-a-figure-with-it
+  (is (= "JPY" (r/posting-currency {:jurisdiction "JPN" :currency ""}))))
+
+(deftest an-uncatalogued-jurisdiction-yields-no-currency-rather-than-a-guess
+  (is (nil? (r/posting-currency {:jurisdiction "BRA"})))
+  (is (nil? (:symbol (r/compensation-unit {:jurisdiction "BRA"})))))
+
+(deftest compensation-unit-pairs-the-code-with-its-symbol
+  (is (= {:currency "JPY" :symbol "¥"} (r/compensation-unit {:jurisdiction "JPN"})))
+  (is (= {:currency "USD" :symbol "$"} (r/compensation-unit {:jurisdiction "USA"}))))
+
+(deftest every-catalogued-jurisdiction-has-a-currency
+  (is (= (set (keys jobsearchops.facts/catalog))
+         (set (keys r/jurisdiction-currency)))))

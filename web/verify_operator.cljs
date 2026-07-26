@@ -10,9 +10,21 @@
 (require '["fs" :as fs]
          '["child_process" :as cp])
 
-(def nbb "../../../../node_modules/.bin/nbb")
+;; Both default to the monorepo layout and are overridable for a
+;; checkout that is not in it (a git worktree, CI): MJS_NBB /
+;; MJS_CLASSPATH, the same escape hatch generate.cljs gives for
+;; JP_GO_DDS_CSS and KOTOBA_HTML_ROOT.
+(def nbb
+  (or (some-> js/process.env.MJS_NBB not-empty) "../../../../node_modules/.bin/nbb"))
 (def classpath
-  "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src")
+  (or (some-> js/process.env.MJS_CLASSPATH not-empty)
+      ;; kotoba-lang/css is required by generate.cljs (css.core) since
+      ;; the EDN/hiccup CSS refactor -- omitting it fails the harness
+      ;; before a single assertion runs.
+      (str "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src"
+           ":../../../kotoba-lang/jp-go-digital-design-system/src"
+           ":../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src"
+           ":../../../kotoba-lang/langgraph/src")))
 
 (defn- generate! [& args]
   (cp/execFileSync nbb (clj->js (concat ["--classpath" classpath "generate.cljs"] args))

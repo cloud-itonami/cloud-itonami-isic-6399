@@ -1,0 +1,58 @@
+name: 求人への応募 / Job application
+description: このボードの運営者(Awai network)自身の求人に応募する方はこちら
+title: "[application] "
+labels: ["job-application"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        募集要項は [`docs/hiring/awai-network.md`](../blob/main/docs/hiring/awai-network.md)
+        を先にお読みください。いずれも**業務委託**（雇用契約ではありません）です。
+
+        ⚠️ **この issue は公開されます。氏名・住所・電話番号・生年月日・
+        マイナンバー・銀行口座などの個人情報は書かないでください。**
+        この actor は設計上、応募者の raw な個人情報を保存するスキーマ
+        フィールドを一切持ちません（`docs/adr/0001-architecture.md`）。
+        連絡先の交換は、この issue でのやり取りのあと非公開の経路に
+        切り替えて行います。
+  - type: dropdown
+    id: role
+    attributes:
+      label: 応募する募集
+      options:
+        - オンライン秘書(スポット・業務委託／リモート)
+        - 現地作業スタッフ(スポット・業務委託／案件ごとの就業場所)
+    validations:
+      required: true
+  - type: textarea
+    id: experience
+    attributes:
+      label: できること / 近い経験
+      description: 個人が特定される情報は書かないでください。業務の内容だけで結構です。
+      placeholder: 例: 日程調整とメール整理を2年ほど。スプレッドシートでの一覧作成が得意。
+    validations:
+      required: true
+  - type: input
+    id: availability
+    attributes:
+      label: 稼働できる時間帯・頻度
+      placeholder: 例: 平日夜 2〜3時間 / 週2〜3日
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: （現地作業に応募する場合）対応できる地域
+      description: 市区町村レベルで結構です。番地・住所は書かないでください。
+      placeholder: 例: 東京23区内 / 京都市内
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 確認
+      options:
+        - label: 業務委託契約（雇用契約ではない）であることを理解しました
+          required: true
+        - label: この issue が公開されることを理解し、個人情報を書いていません
+          required: true
