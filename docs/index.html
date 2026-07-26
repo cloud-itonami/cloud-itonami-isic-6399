@@ -3039,7 +3039,7 @@ code { font-family: var(--font-family-mono); background: var(--color-neutral-sol
       </tbody></table>
     </div>
   </section><section class="dds-ext-section">
-    <h2 class="dads-heading" data-size="32">実データ収集 — 3252 件、賃金審査待ち(未掲載)</h2>
+    <h2 class="dads-heading" data-size="32">実データ収集 — 3253 件、賃金審査待ち(未掲載)</h2>
     <p class="mjs-lead"><code>web/collect.cljs</code> が実在企業の公開求人API(Greenhouse Job Board API、認証不要・スクレイピングなし)から取得し、実 actor の <code>:jurisdiction/assess</code> を通過した実求人です。<strong>掲載(publish)は試行していません</strong> — 求人元は時給レンジは開示しても月間労働時間まではコミットしないため、このactorの「時給×月間時間=表示賃金」という厳密な整合性チェックを満たす根拠がまだありません。ここで欠けている数値をこちら側で推定して埋めることは、まさにこのactorが防ごうとしている不正確な賃金表示そのものになるため、賃金の裏付けが取れるまで意図的に掲載を保留しています。</p>
     <div class="dads-table">
       <table class="dads-table__table"><thead>
@@ -3261,7 +3261,7 @@ code { font-family: var(--font-family-mono); background: var(--color-neutral-sol
         </tr>
       </tbody></table>
     </div>
-    <p class="mjs-fine">3252 件中 30 件を表示(残り 3222 件は省略)。</p>
+    <p class="mjs-fine">3253 件中 30 件を表示(残り 3223 件は省略)。</p>
   </section><section class="dds-ext-section">
     <h2 class="dads-heading" data-size="32">自社求人 — 1 件、報酬額の確定待ち(未掲載)</h2>
     <p class="mjs-lead">このボードの運営者自身が出した求人のうち、<strong>報酬額がまだ確定していないもの</strong>です。実 actor の <code>:jurisdiction/assess</code> は通過していますが、<strong>掲載(publish)は試行していません</strong> — 報酬を伏せたまま、あるいは仮の数字を置いて掲載することは的確表示義務(職業安定法5条の4)の趣旨に反するため、金額が確定するまで意図的に保留しています。確定した時点で通常の <code>:posting/publish</code> を通って上の掲載一覧に入ります。</p>
@@ -3793,6 +3793,7 @@ committed · op=:jurisdiction/assess · subject=gh-7277325 · disposition=commit
 committed · op=:jurisdiction/assess · subject=gh-7280136 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
 committed · op=:jurisdiction/assess · subject=gh-7281354 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
 committed · op=:jurisdiction/assess · subject=gh-7301336 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
+committed · op=:jurisdiction/assess · subject=gh-7305880 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
 committed · op=:jurisdiction/assess · subject=gh-7309137 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
 committed · op=:jurisdiction/assess · subject=gh-7315334 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
 committed · op=:jurisdiction/assess · subject=gh-7315714 · disposition=commit · basis=[&quot;Title VII §704(b) (42 U.S.C. §2000e-3(b), discriminatory job notices/advertisements), ADEA §4(e) (29 U.S.C. §623(e)) and FTC Act §5 (15 U.S.C. §45, deceptive practices)&quot; &quot;https://www.eeoc.gov/prohibited-employment-policiespractices&quot;]
