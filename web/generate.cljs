@@ -1,5 +1,5 @@
 ;; Generates docs/index.html (the GitHub Pages demo UI) from EDN/Hiccup via
-;; kotoba-lang/html + kotoba-lang/css -- markup/styling as data, not
+;; kotoba-lang/html + kotoba-lang/jp-go-digital-design-system -- markup/styling as data, not
 ;; hand-quoted HTML strings -- following kototama/web/generate.cljs's own
 ;; precedent and the org's runtime priority (this is an nbb script; the
 ;; OUTPUT is a plain static page with no build step for a visiting browser;
@@ -17,14 +17,25 @@
 ;; ledger section is the append-only record those runs actually wrote.
 ;; nbb-loadable since kotoba-lang/langchain 9f4453d3 + 0f966d06.
 ;;
+;;
+;; UI は デジタル庁デザインシステム(DADS)を kotoba-lang/jp-go-digital-design-system
+;; 経由で使う(superproject ADR-2607261600)。この actor は職業安定法5条の4
+;; (的確表示義務)をソフトウェアとして実装しており、日本の公的サービスの視覚言語に
+;; 揃える方が利用者の信頼判断に効く。DADS は light mode 固定(上流に dark palette
+;; が無い)なので、移行前の prefers-color-scheme による dark 対応は意図的に
+;; 落としている。
+;;
 ;; Run (from this web/ directory, inside the monorepo checkout):
 ;;   ../../../../node_modules/.bin/nbb \
-;;     --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
-;;     generate.cljs
+;;     --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
+;;     generate.cljs [postings.edn]
+;;
+;; dds.css の読み込みパスは環境変数 JP_GO_DDS_CSS で上書きできる
+;; (CI / worktree など monorepo 以外のレイアウト用)。
 (require '[clojure.edn :as edn]
          '[clojure.string :as cstr]
-         '[html.core :as html]
-         '[css.core :as css]
+         '[jp-go-dds.core :as dds]
+         '[jp-go-dds.page :as page]
          '[langgraph.graph :as g]
          '[jobsearchops.store :as store]
          '[jobsearchops.operation :as op]
@@ -195,73 +206,77 @@
 (def yen (js/Intl.NumberFormat. "ja-JP"))
 (defn fmt-yen [n] (str "¥" (.format yen n) "/月"))
 
-(def stylesheet
-  (css/style-node
-   {:rules
-    {":root" {:--fg "#1b1f24" :--bg "#ffffff" :--muted "#57606a"
-              :--card "#f6f8fa" :--line "#d0d7de" :--accent "#0b5cad"
-              :--ok-bg "#dafbe1" :--ok-fg "#116329"
-              :--hold-bg "#ffebe9" :--hold-fg "#a40e26"}
-     "body" {:font-family "system-ui,-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif"
-             :margin "0 auto" :max-width 880 :padding "28px 20px 48px"
-             :color "var(--fg)" :background "var(--bg)" :line-height 1.55}
-     "header p.sub" {:color "var(--muted)" :margin-top 4}
-     "h1"   {:font-size 24 :margin "0"}
-     "h2"   {:font-size 17 :margin-top 40 :border-top "1px solid var(--line)"
-             :padding-top 24}
-     ".search" {:display :flex :gap 8 :margin-top 20}
-     "input#q" {:flex 1 :font-size 16 :padding "10px 14px"
-                :border "1.5px solid var(--line)" :border-radius 8
-                :background "var(--bg)" :color "var(--fg)"}
-     "select#jur, select#src" {:font-size 15 :padding "10px 12px"
-                               :border "1.5px solid var(--line)" :border-radius 8
-                               :background "var(--bg)" :color "var(--fg)"}
-     ".card" {:background "var(--card)" :border "1px solid var(--line)"
-              :border-radius 10 :padding "14px 16px" :margin-top 12}
-     ".card h3" {:margin "0 0 2px" :font-size 16}
-     ".card .meta" {:color "var(--muted)" :font-size 13.5}
-     ".card .pay" {:margin-top 6 :font-size 15 :font-weight 600}
-     ".badge" {:display :inline-block :font-size 12 :font-weight 600
-               :border-radius 20 :padding "2px 10px" :margin-left 8
-               :vertical-align "1px"}
-     ".badge.ok" {:background "var(--ok-bg)" :color "var(--ok-fg)"}
-     ".badge.hold" {:background "var(--hold-bg)" :color "var(--hold-fg)"}
-     ".chip" {:display :inline-block :font-size 12 :color "var(--muted)"
-              :border "1px solid var(--line)" :border-radius 20
-              :padding "1px 9px" :margin-right 6}
-     "#empty" {:color "var(--muted)" :margin-top 16}
-     "table" {:border-collapse :collapse :width "100%" :margin-top 12
-              :font-size 13.5}
-     "th" {:text-align :left :color "var(--muted)" :font-weight 600
-           :border-bottom "1.5px solid var(--line)" :padding "6px 8px"}
-     "td" {:border-bottom "1px solid var(--line)" :padding "7px 8px"
-           :vertical-align :top}
-     "pre" {:background "var(--card)" :border "1px solid var(--line)"
-            :border-radius 8 :padding "10px 12px" :overflow-x :auto
-            :font-size 12.5 :line-height 1.7}
-     "footer" {:margin-top 48 :padding-top 16 :border-top "1px solid var(--line)"
-               :color "var(--muted)" :font-size 13.5}
-     "footer p.cta" {:font-size 15 :font-weight 600 :color "var(--fg)" :margin-bottom 14}
-     "a" {:color "var(--accent)"}
-     "code" {:background "var(--card)" :padding "1px 5px" :border-radius 4
-             :font-size "0.9em"}
-     ".pitch" {:background "var(--card)" :border "1px solid var(--line)"
-               :border-radius 12 :padding "20px 22px" :margin-top 20}
-     ".pitch h2" {:margin-top 0 :border-top "none" :padding-top 0 :font-size 18}
-     ".pitch table" {:margin-top 14}
-     ".pitch .ctarow" {:display :flex :gap 10 :flex-wrap :wrap :margin-top 18}
-     ".btn" {:display :inline-block :font-size 14 :font-weight 700
-             :padding "10px 18px" :border-radius 8 :text-decoration :none}
-     ".btn.primary" {:background "var(--accent)" :color "#ffffff"}
-     ".btn.secondary" {:background "transparent" :color "var(--fg)"
-                       :border "1.5px solid var(--line)"}
-     ".pitch .fine" {:color "var(--muted)" :font-size 12.5 :margin-top 10}}
-    :media
-    {"(prefers-color-scheme: dark)"
-     {":root" {:--fg "#e6edf3" :--bg "#0d1117" :--muted "#8d96a0"
-               :--card "#161b22" :--line "#30363d" :--accent "#58a6ff"
-               :--ok-bg "#12261e" :--ok-fg "#3fb950"
-               :--hold-bg "#2d1215" :--hold-fg "#f85149"}}}}))
+(def dds-css-path
+  (or (some-> js/process.env.JP_GO_DDS_CSS not-empty)
+      "../../../kotoba-lang/jp-go-digital-design-system/resources/jp_go_dds/dds.css"))
+(def dds-css (fs/readFileSync dds-css-path "utf8"))
+
+;; ページ固有の微調整のみ。色は DADS token 参照で raw hex は書かない
+;; (kotoba-uiux 規約)。レイアウトの土台は dds-ext-*(jp-go-dds.core/ext-css)。
+;; select は上流 DADS の vendored subset に無い(dds.css に .dads-select が
+;; 無い)ので、.dads-input-text__input と寸法・境界・focus を揃える。
+(def app-css
+  (str
+   ".mjs-header{padding-block:2.5rem 0}"
+   ".mjs-header .dads-heading{margin:0 0 .5rem}"
+   ".mjs-lead{color:var(--color-neutral-solid-gray-700);line-height:1.7;margin:.75rem 0 0}"
+   ".mjs-pitch{margin-block:2rem}"
+   ".mjs-pitch .dads-heading{margin:0 0 .75rem}"
+   ".mjs-pitch p{margin:0 0 .75rem;line-height:1.8}"
+   ".mjs-pitch .dads-table{margin-block:1rem}"
+   ".mjs-ctarow{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}"
+   ".mjs-fine{color:var(--color-neutral-solid-gray-600);font-size:.8125rem;"
+   "line-height:1.8;margin-top:1rem}"
+   ".mjs-search{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.5rem}"
+   ".mjs-search .dads-form-control-label{flex:1;min-width:12rem}"
+   ".mjs-select{box-sizing:border-box;width:100%;height:3rem;"
+   "border:1px solid var(--color-neutral-solid-gray-600);"
+   "background-color:var(--color-neutral-white);"
+   "padding:calc(12 / 16 * 1rem) calc(16 / 16 * 1rem);"
+   "border-radius:calc(8 / 16 * 1rem);color:var(--color-neutral-solid-gray-900);"
+   "font:inherit;line-height:1}"
+   "@media (hover: hover){.mjs-select:hover{border-color:var(--color-neutral-black)}}"
+   ".mjs-select:focus-visible{outline:calc(4 / 16 * 1rem) solid var(--color-neutral-black);"
+   "outline-offset:calc(2 / 16 * 1rem);"
+   "box-shadow:0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300)}"
+   ".dads-input-text__input{width:100%}"
+   ;; 検索結果カードは search.cljs が実行時に注入する(dds-ext-card + mjs-card)
+   "#results{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));"
+   "gap:1rem;margin-top:1rem}"
+   "#results>*{min-width:0}"
+   ".mjs-card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;"
+   "align-items:baseline;flex-wrap:wrap}"
+   ".mjs-card .meta{color:var(--color-neutral-solid-gray-600);font-size:.8125rem;line-height:1.7}"
+   ".mjs-card .pay{margin-top:.35rem;font-size:.875rem;line-height:1.7}"
+   ".mjs-card .chip{display:inline-block;font-size:.75rem;padding:.05rem .5rem;"
+   "border-radius:1rem;border:1px solid var(--color-neutral-solid-gray-300);"
+   "color:var(--color-neutral-solid-gray-700)}"
+   ".mjs-empty{color:var(--color-neutral-solid-gray-600);margin-top:1rem}"
+   ".mjs-delisted{color:var(--color-neutral-solid-gray-600);font-size:.875rem;"
+   "line-height:1.8;margin-top:1rem}"
+   ".mjs-delisted>span{display:block}"
+   ".mjs-hold-rules>span{display:block;margin-block:.15rem}"
+   ;; チップのラベルを途中で折り返さない。.dads-table は overflow-x:auto。
+   ".dads-table .dads-chip-label{white-space:nowrap}"
+   ".mjs-referrals{line-height:1.9;padding-left:1.25rem;margin-top:1rem}"
+   ;; 台帳は等幅。横に長いので自身の中でだけ横スクロールさせる
+   "pre{font-family:var(--font-family-mono);font-size:.8125rem;line-height:1.7;"
+   "background:var(--color-neutral-solid-gray-50);"
+   "border:1px solid var(--color-neutral-solid-gray-200);border-radius:8px;"
+   "padding:1rem;overflow-x:auto;margin-top:1rem}"
+   ".mjs-guarantees{line-height:1.9;padding-left:1.25rem;margin:0}"
+   ".mjs-footer{border-top:1px solid var(--color-neutral-solid-gray-200);"
+   "margin-top:3rem;padding-block:1.5rem 3rem;"
+   "color:var(--color-neutral-solid-gray-600);font-size:.875rem;line-height:1.8}"
+   ".mjs-footer p{margin:0 0 .75rem}"
+   ".mjs-footer .cta{font-size:.9375rem;font-weight:700;"
+   "color:var(--color-neutral-solid-gray-900)}"
+   "code{font-family:var(--font-family-mono);background:var(--color-neutral-solid-gray-50);"
+   "border:1px solid var(--color-neutral-solid-gray-200);border-radius:4px;"
+   "padding:1px 5px;font-size:.9em}"))
+
+;; 判定バッジは DADS chip-label(filled-1)。
+(defn- chip [label color] (dds/chip-label label {:color color :style "filled-1"}))
 
 ;; Two ground-truth shapes reach here (jobsearchops.registry's own ns
 ;; docstring): EXACT (hand-authored/demo, JPY hourly x monthly-hours)
@@ -284,161 +299,177 @@
            (str "時給 ¥" (.format yen (:source-hourly-wage p))
                 " × " (:source-monthly-hours p) "h"))})
 
-(def page
-  [:html {:lang "ja"}
-   [:head
-    [:meta {:charset "utf-8"}]
-    [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-    [:title "求人メタサーチ自社運営 — 営業電話なしで即¥80,000/月 | Meta Job Search (cloud-itonami-isic-6399)"]
-    [:meta {:name "description"
-            :content "自治体・業界団体・求人媒体向け求人メタサーチ。Madgexは営業電話必須の非公開価格、このボードは即決フラット¥80,000/月。職業安定法5条の4(的確表示義務)を独立ガバナーが人間の承認でも覆せずHOLDする。"}]
-    stylesheet]
-   [:body
-    [:header
-     [:h1 "Meta Job Search " [:span.badge.ok "governed"]]
-     [:p.sub "求人メタサーチ — 独立ガバナーの検査を通過した求人だけが載る検索インデックス。 "
-      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399"} "cloud-itonami-isic-6399"]
-      " のライブデモ(合成データ)。このページの内容はすべて、生成時に実 actor"
-      "(StateGraph + Governor)を実行した結果です。"]]
+(def body
+  (dds/container
+   [:header {:class "mjs-header"}
+    (dds/heading 1 [:span "Meta Job Search " (chip "governed" "green")])
+    [:p {:class "mjs-lead"}
+     "求人メタサーチ — 独立ガバナーの検査を通過した求人だけが載る検索インデックス。 "
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399"} "cloud-itonami-isic-6399"]
+     " のライブデモ(合成データ)。このページの内容はすべて、生成時に実 actor"
+     "(StateGraph + Governor)を実行した結果です。"]]
 
-    [:div.pitch
-     [:h2 "見積もりのために営業電話、していませんか?"]
+   [:div {:class "mjs-pitch"}
+    (dds/card
+     (dds/heading 2 "見積もりのために営業電話、していませんか?" {:size "24"})
      [:p "Madgexは価格非公開・sales-gated(問い合わせ必須)。JobBoard.io・JBoard は公開価格が"
       "あるものの月額$249〜849。このボードは"
       [:strong " 即決フラット ¥80,000/月"] "、営業プロセス不要で今すぐ始められます。"]
-     [:table
-      [:thead [:tr [:th "求人ボードSaaS"] [:th "価格の出し方"] [:th "実勢価格"]]]
-      [:tbody
-       [:tr [:td "Madgex"] [:td "非公開(要問い合わせ)"] [:td "$500+/月〜(要見積)"]]
-       [:tr [:td "JobBoard.io"] [:td "公開・段階制"] [:td "$449〜649/月"]]
-       [:tr [:td "JBoard"] [:td "公開・段階制"] [:td "$249〜849/月"]]
-       [:tr [:td "engage (日本)"] [:td "無料+従量課金"] [:td "掲載無料 + ¥7,000/日 配信"]]
-       [:tr [:td [:strong "このボード"]] [:td [:strong "即決・公開・フラット"]] [:td [:strong "¥80,000/月"]]]]]
+     (dds/table
+      {:headers ["求人ボードSaaS" "価格の出し方" "実勢価格"]
+       :rows [["Madgex" "非公開(要問い合わせ)" "$500+/月〜(要見積)"]
+              ["JobBoard.io" "公開・段階制" "$449〜649/月"]
+              ["JBoard" "公開・段階制" "$249〜849/月"]
+              ["engage (日本)" "無料+従量課金" "掲載無料 + ¥7,000/日 配信"]
+              [[:strong "このボード"] [:strong "即決・公開・フラット"] [:strong "¥80,000/月"]]]})
      [:p "さらに、令和4年職業安定法改正の"
       [:strong "的確表示義務(5条の4)"] "を独立ガバナーが構造的に検査 — "
       "賃金表示・転載許諾・差別的広告のいずれかで不合格の求人は、人間の承認があっても"
       "検索インデックスに載りません。"]
-     [:div.ctarow
-      [:a.btn.primary {:href "https://buy.stripe.com/bJe9AS74n1dmcOQcEvbMQ0b"}
-       "🡒 Managed Job Board を購読(¥80,000/月)"]
-      [:a.btn.secondary {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new"}
-       "自前運用(セルフホスト)に興味がある"]]
-     [:p.fine "価格根拠: "
+     [:div {:class "mjs-ctarow"}
+      (dds/button "🡒 Managed Job Board を購読(¥80,000/月)"
+                  {:type :solid-fill :size "lg"
+                   :href "https://buy.stripe.com/bJe9AS74n1dmcOQcEvbMQ0b"})
+      (dds/button "自前運用(セルフホスト)に興味がある"
+                  {:type :outline :size "lg"
+                   :href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new"})]
+     [:p {:class "mjs-fine"} "価格根拠: "
       [:a {:href "https://github.com/com-junkawasaki/root/blob/main/90-docs/pricing-intelligence/pricing-intelligence-ledger.edn"}
        "6社の実競合調査(2026-07-16)"]
-      " — 下の技術デモは合成データによる実 actor 実行結果、この価格比較表とは独立して生成されています。"]]
+      " — 下の技術デモは合成データによる実 actor 実行結果、この価格比較表とは独立して生成されています。"])]
 
-    [:div.search
-     [:input {:id "q" :type "search" :placeholder "職種・雇用主・キーワードで検索…"
-              :autocomplete "off"}]
-     (into [:select {:id "jur"} [:option {:value ""} "全法域"]]
-           (for [j (sort (distinct (map :jurisdiction live-index)))]
-             [:option {:value j} j]))
-     [:select {:id "src"}
-      [:option {:value ""} "全ソース"]
-      [:option {:value "employer-direct"} "雇用主直接"]
-      [:option {:value "partner-feed"} "提携フィード"]
-      [:option {:value "board-crawl"} "許諾クロール"]]]
-
+   (dds/section
+    {:title "検索インデックス"}
+    [:div {:class "mjs-search"}
+     (dds/form-field
+      {:label "検索" :for "q"}
+      (dds/input-text {:id "q" :type "search" :autocomplete "off"
+                       :placeholder "職種・雇用主・キーワードで検索…"}))
+     (dds/form-field
+      {:label "法域" :for "jur"}
+      (into [:select {:id "jur" :class "mjs-select"} [:option {:value ""} "全法域"]]
+            (for [j (sort (distinct (map :jurisdiction live-index)))]
+              [:option {:value j} j])))
+     (dds/form-field
+      {:label "ソース" :for "src"}
+      [:select {:id "src" :class "mjs-select"}
+       [:option {:value ""} "全ソース"]
+       [:option {:value "employer-direct"} "雇用主直接"]
+       [:option {:value "partner-feed"} "提携フィード"]
+       [:option {:value "board-crawl"} "許諾クロール"]])]
     [:div {:id "results"}]
-    [:p {:id "empty" :hidden true} "該当する求人はありません。"]
-    (if (seq delisted)
-      (into [:p [:span.meta "取下げ済み(インデックス外): "]]
+    [:p {:id "empty" :class "mjs-empty" :hidden true} "該当する求人はありません。"]
+    (when (seq delisted)
+      (into [:p {:class "mjs-delisted"} [:span "取下げ済み(インデックス外): "]]
             (for [p delisted]
-              [:span.meta (:title p) " (" (:employer p) ") — 掲載後に充足し取下げ("
-               [:code (:delisting-number p)] ")。的確表示義務はこの「消える」側も含む。"]))
-      "")
+              [:span (:title p) " (" (:employer p) ") — 掲載後に充足し取下げ("
+               [:code (:delisting-number p)] ")。的確表示義務はこの「消える」側も含む。"]))))
 
-    [:h2 "Governor transparency — 掲載を拒否した求人票"]
-    [:p "Indeed 型アグリゲーターとの違いはここです: 掲載判断は LLM でも運営者の裁量でもなく、"
+   (dds/section
+    {:title "Governor transparency — 掲載を拒否した求人票"}
+    [:p {:class "mjs-lead"}
+     "Indeed 型アグリゲーターとの違いはここです: 掲載判断は LLM でも運営者の裁量でもなく、"
      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc"}
       "独立ガバナー"]
      " の HARD check が下します(人間の承認でも覆せません)。この表はハードコードではなく、"
      "ページ生成時に実際の OperationActor へ掲載を試行させ、ガバナーが拒否した実判定です。"]
-    [:table
-     [:thead [:tr [:th "求人票"] [:th "HARD check"] [:th "理由"]]]
-     (into [:tbody]
-           (for [{:keys [posting violations note]} held]
-             [:tr
-              [:td [:strong (:title posting)] [:br]
-               [:span.meta (:employer posting) " · " (:jurisdiction posting) " · " (:id posting)
-                (when note (str " · " note))]]
-              [:td (into [:span] (for [v violations] [:span [:span.badge.hold (name (:rule v))] " "]))]
-              [:td (cstr/join " / " (map :detail violations))]]))]
+    (dds/table
+     {:headers ["求人票" "HARD check" "理由"]
+      :rows (for [{:keys [posting violations note]} held]
+              [[:span [:strong (:title posting)] [:br]
+                [:span {:class "meta"} (:employer posting) " · " (:jurisdiction posting) " · " (:id posting)
+                 (when note (str " · " note))]]
+               (into [:span {:class "mjs-hold-rules"}]
+                     (for [v violations] [:span (chip (name (:rule v)) "red")]))
+               (cstr/join " / " (map :detail violations))])}))
 
-    (when (seq collected-pending)
-      [:div
-       [:h2 "実データ収集 — " (count collected-pending) " 件、賃金審査待ち(未掲載)"]
-       [:p [:code "web/collect.cljs"] " が実在企業の公開求人API(Greenhouse Job Board API、"
-        "認証不要・スクレイピングなし)から取得し、実 actor の "
-        [:code ":jurisdiction/assess"] " を通過した実求人です。"
-        [:strong "掲載(publish)は試行していません"] " — 求人元は時給レンジは開示しても"
-        "月間労働時間まではコミットしないため、このactorの「時給×月間時間=表示賃金」"
-        "という厳密な整合性チェックを満たす根拠がまだありません。ここで欠けている数値を"
-        "こちら側で推定して埋めることは、まさにこのactorが防ごうとしている不正確な"
-        "賃金表示そのものになるため、賃金の裏付けが取れるまで意図的に掲載を保留しています。"]
-       [:table
-        [:thead [:tr [:th "求人票(サンプル)"] [:th "法域"] [:th "求人元"]]]
-        (into [:tbody]
-              (for [{:keys [posting]} (take 30 collected-pending)]
-                [:tr
-                 [:td [:a {:href (:source-url posting)} (:title posting)]]
-                 [:td (:jurisdiction posting)]
-                 [:td (:employer posting)]]))]
-       (when (> (count collected-pending) 30)
-         [:p.meta (count collected-pending) " 件中 30 件を表示(残り "
-          (- (count collected-pending) 30) " 件は省略)。"])])
+   (when (seq collected-pending)
+     (dds/section
+      {:title (str "実データ収集 — " (count collected-pending) " 件、賃金審査待ち(未掲載)")}
+      [:p {:class "mjs-lead"}
+       [:code "web/collect.cljs"] " が実在企業の公開求人API(Greenhouse Job Board API、"
+       "認証不要・スクレイピングなし)から取得し、実 actor の "
+       [:code ":jurisdiction/assess"] " を通過した実求人です。"
+       [:strong "掲載(publish)は試行していません"] " — 求人元は時給レンジは開示しても"
+       "月間労働時間まではコミットしないため、このactorの「時給×月間時間=表示賃金」"
+       "という厳密な整合性チェックを満たす根拠がまだありません。ここで欠けている数値を"
+       "こちら側で推定して埋めることは、まさにこのactorが防ごうとしている不正確な"
+       "賃金表示そのものになるため、賃金の裏付けが取れるまで意図的に掲載を保留しています。"]
+      (dds/table
+       {:headers ["求人票(サンプル)" "法域" "求人元"]
+        :rows (for [{:keys [posting]} (take 30 collected-pending)]
+                [[:a {:href (:source-url posting)} (:title posting)]
+                 (:jurisdiction posting)
+                 (:employer posting)])})
+      (when (> (count collected-pending) 30)
+        [:p {:class "mjs-fine"} (count collected-pending) " 件中 30 件を表示(残り "
+         (- (count collected-pending) 30) " 件は省略)。"])))
 
-    (when (seq referrals)
-      [:div
-       [:h2 "紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)"]
-       [:p "ボード上の求人への応募は、actor 間の直接呼び出しではなく人間が "
-        [:a {:href "/cloud-itonami-isic-7810/"} "Placement Desk (isic-7810)"]
-        " へ運ぶ referral 記録になります。応募者本人の同意なしには作成できず、"
-        "記録が持つのは応募者への参照のみ(PII 本体はこの公開 actor の store に入りません)。"]
-       (into [:ul]
-             (for [r referrals]
-               [:li [:code (get r "record_id")] " → " (get r "posting_id")
-                " (applicant: " (get r "applicant_ref") ") → 搬送先 " (get r "target")]))])
+   (when (seq referrals)
+     (dds/section
+      {:title "紹介デスクへのハンドオフ — 人間が運ぶ referral draft (ADR-2607131000)"}
+      [:p {:class "mjs-lead"}
+       "ボード上の求人への応募は、actor 間の直接呼び出しではなく人間が "
+       [:a {:href "/cloud-itonami-isic-7810/"} "Placement Desk (isic-7810)"]
+       " へ運ぶ referral 記録になります。応募者本人の同意なしには作成できず、"
+       "記録が持つのは応募者への参照のみ(PII 本体はこの公開 actor の store に入りません)。"]
+      (into [:ul {:class "mjs-referrals"}]
+            (for [r referrals]
+              [:li [:code (get r "record_id")] " → " (get r "posting_id")
+               " (applicant: " (get r "applicant_ref") ") → 搬送先 " (get r "target")]))))
 
-    [:h2 "監査台帳 — 上の全実行が実際に書いた追記専用レコード"]
-    [:p "掲載・取下げ・拒否のすべてが不変の台帳に残ります(的確表示義務コンプライアンスの証跡)。"
+   (dds/section
+    {:title "監査台帳 — 上の全実行が実際に書いた追記専用レコード"}
+    [:p {:class "mjs-lead"}
+     "掲載・取下げ・拒否のすべてが不変の台帳に残ります(的確表示義務コンプライアンスの証跡)。"
      "以下はページ生成時の実 actor 実行が書いた事実そのものです。"]
-    (into [:pre] [(cstr/join "\n" (map ledger-line ledger))])
+    [:pre (cstr/join "\n" (map ledger-line ledger))])
 
-    [:h2 "この検索インデックスが保証すること"]
-    [:ul
+   (dds/section
+    {:title "この検索インデックスが保証すること"}
+    [:ul {:class "mjs-guarantees"}
      [:li "求人元が募集終了した求人は載らない(" [:strong "的確表示義務"] " — 職業安定法5条の4、令和4年改正)"]
      [:li "表示賃金は求人元記録からの独立再計算と常に一致する"]
      [:li "転載許諾が必要なソースの求人は、許諾確認なしに載らない"]
      [:li "保護属性に基づく差別的広告は載らない(均等法5条 / Title VII §704(b) / Equality Act 2010 / AGG §11)"]
-     [:li "すべての掲載・取下げ・拒否が追記専用の監査台帳に残る"]]
+     [:li "すべての掲載・取下げ・拒否が追記専用の監査台帳に残る"]])
 
-    [:footer
-     [:p.cta [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml"}
-              "🡒 自分の地域・業界でこのボードを運営したい方はこちら(operator-interest)"]]
-     [:p "OSS (AGPL-3.0-or-later)。fork して自分の求人ポータルとして運営できます — "
-      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md"} "business model"]
-      " · "
-      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md"} "operator guide"]
-      " · "
-      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md"} "architecture ADR"]
-      " · 姉妹デモ: "
-      [:a {:href "https://cloud-itonami.github.io/cloud-itonami-isic-6310/"} "Talent Board (isic-6310)"]
-      "。このページは " [:code "web/generate.cljs"] " (nbb) が実 actor を実行して生成し、検索は "
-      [:code "search.cljs"] " (scittle = ブラウザ内 ClojureScript) が実行しています。"]]
+   [:footer {:class "mjs-footer"}
+    [:p {:class "cta"}
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/issues/new?template=operator-interest.yml"}
+      "🡒 自分の地域・業界でこのボードを運営したい方はこちら(operator-interest)"]]
+    [:p "OSS (AGPL-3.0-or-later)。fork して自分の求人ポータルとして運営できます — "
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/business-model.md"} "business model"]
+     " · "
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/operator-guide.md"} "operator guide"]
+     " · "
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md"} "architecture ADR"]
+     " · 姉妹デモ: "
+     [:a {:href "https://cloud-itonami.github.io/cloud-itonami-isic-6310/"} "Talent Board (isic-6310)"]
+     "。このページは " [:code "web/generate.cljs"] " (nbb) が実 actor を実行して生成し、検索は "
+     [:code "search.cljs"] " (scittle = ブラウザ内 ClojureScript) が実行しています。"]]))
 
-    ;; live-index postings as data for the in-browser search (search.cljs).
-    ;; [:hiccup/raw ...] because script elements are raw text -- the browser
-    ;; never decodes entities inside them, so escaping would corrupt the
-    ;; JSON. The JSON contains no "<", so raw embedding is safe.
-    [:script {:type "application/json" :id "postings-data"}
-     [:hiccup/raw (js/JSON.stringify (clj->js (mapv posting->json-entry live-index)))]]
-    [:script {:src "https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"}]
-    [:script {:type "application/x-scittle" :src "search.cljs"}]]])
+;; live-index postings as data for the in-browser search (search.cljs).
+;; script は html.core の raw-text tag なので子は素の文字列で渡す
+;; (ブラウザは script 内の実体参照を復号しないため、エスケープすると JSON が壊れる)。
+(def scripts
+  [[:script {:type "application/json" :id "postings-data"}
+    (js/JSON.stringify (clj->js (mapv posting->json-entry live-index)))]
+   [:script {:src "https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"}]
+   [:script {:type "application/x-scittle" :src "search.cljs"}]])
 
 (fs/mkdirSync "../docs" #js {:recursive true})
-(fs/writeFileSync "../docs/index.html" (str "<!doctype html>\n" (html/render page) "\n"))
+(fs/writeFileSync
+ "../docs/index.html"
+ (str (page/->page
+       {:title "求人メタサーチ自社運営 — 営業電話なしで即¥80,000/月 | Meta Job Search (cloud-itonami-isic-6399)"
+        :description "自治体・業界団体・求人媒体向け求人メタサーチ。Madgexは営業電話必須の非公開価格、このボードは即決フラット¥80,000/月。職業安定法5条の4(的確表示義務)を独立ガバナーが人間の承認でも覆せずHOLDする。"
+        :lang "ja"
+        :css dds-css
+        :app-css app-css}
+       body
+       scripts)
+      "\n"))
 (fs/copyFileSync "search.cljs" "../docs/search.cljs")
 (println (str "wrote docs/index.html (live-index " (count live-index)
               ", delisted " (count delisted)

@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
         with: {repository: kotoba-lang/html, path: kotoba-lang/html}
       - uses: actions/checkout@v4
-        with: {repository: kotoba-lang/css, path: kotoba-lang/css}
+        with: {repository: kotoba-lang/jp-go-digital-design-system, path: kotoba-lang/jp-go-digital-design-system}
       - uses: actions/checkout@v4
         with: {repository: kotoba-lang/langchain, path: kotoba-lang/langchain}
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
         # checkout depth (which differs from the monorepo layout here).
         run: |
           npx nbb \
-            --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/css/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
+            --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
             generate.cljs $( [ -f postings.edn ] && echo postings.edn )
       - name: verify (headless harness)
         working-directory: cloud-itonami/cloud-itonami-isic-6399/web
