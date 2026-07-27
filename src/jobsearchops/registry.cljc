@@ -60,6 +60,27 @@
   (let [s (str n)]
     (str (apply str (repeat (max 0 (- w (count s))) "0")) s)))
 
+(def ^:private amount-scale
+  "Sub-minor-unit scale used when comparing two money amounts: 1/10000
+  of a unit. Coarser than double representation error by many orders of
+  magnitude, finer than any real currency's minor unit."
+  10000)
+
+(defn- money=
+  "Exact-at-money-precision equality for two amounts.
+
+  `==` on raw doubles is NOT the right comparison for money: a product
+  or sum of decimal amounts is routinely not the double nearest the true
+  total, so a CORRECT displayed compensation compared false against its
+  own source record. Measured across this fleet's recompute shapes,
+  20-27% of cent-denominated combinations failed while being right. A
+  missing or non-numeric amount never matches -- un-verifiable is not
+  the same as correct."
+  [x y]
+  (and (number? x) (number? y)
+       (= (Math/round (* amount-scale (double x)))
+          (Math/round (* amount-scale (double y))))))
+
 (defn compute-displayed-compensation
   "The ground-truth monthly compensation for `posting`'s own
   `:source-hourly-wage` and `:source-monthly-hours` -- a single flat
@@ -105,7 +126,7 @@
   [posting]
   (if (range-shaped? posting)
     (displayed-compensation-within-source-range? posting)
-    (== (double (:displayed-compensation posting)) (compute-displayed-compensation posting))))
+    (money= (:displayed-compensation posting) (compute-displayed-compensation posting))))
 
 (defn compensation-summary
   "Human-readable ground-truth trace for `posting`'s own displayed
