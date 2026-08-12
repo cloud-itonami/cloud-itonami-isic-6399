@@ -210,7 +210,19 @@
       (str/replace "<" "&lt;")
       (str/replace ">" "&gt;")))
 
-(defn- kw-str [v] (if (keyword? v) (name v) (str v)))
+(defn- kw-str
+  "A keyword rendered with its namespace intact. This domain's ops are
+  namespaced (`:posting/correct` vs `:application/refer`), so dropping the
+  namespace would collapse distinct ops into the same bare verb."
+  [v]
+  (if (keyword? v) (subs (str v) 1) (str v)))
+
+(defn- fixed2
+  "Two decimal places, locale-independent. Plain `format` would follow the
+  default locale and emit `0,90` on a comma-decimal machine, which would
+  make the page's bytes depend on where it was built."
+  [v]
+  (String/format java.util.Locale/ROOT "%.2f" (into-array Object [(double v)])))
 
 (defn- code [v] (str "<code>" (esc v) "</code>"))
 
@@ -494,7 +506,7 @@
          (code (:subject request))
          (if p (esc (:jurisdiction p)) (dash))
          (if-let [s (:stake (:proposal r))] (code (kw-str s)) (dash))
-         (n-cell (format "%.2f" (double (:confidence (:verdict r) 0.0))))
+         (n-cell (fixed2 (:confidence (:verdict r) 0.0)))
          (outcome-cell o)
          (detail-cell o))))
 
