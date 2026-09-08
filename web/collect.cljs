@@ -26,7 +26,7 @@
 ;;   ../../../../node_modules/.bin/nbb --classpath "../src" collect.cljs
 (ns collect
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [jobsearchops.ingest :as ingest]
             ["fs" :as fs]))
 
