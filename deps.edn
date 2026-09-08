@@ -6,7 +6,12 @@
  ;; repo is standalone (forkable outside the workspace); the :local/root
  ;; paths only resolve inside the monorepo checkout — a standalone fork
  ;; should override them with git coordinates.
- :deps {;; jp-go-dds (デジタル庁デザインシステム) -- the workspace's BASE design
+ :deps {
+        ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
+        ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
+        ;; this repo silently rides whatever a sibling happens to name.
+        io.github.kotoba-lang/text {:git/sha "73bdb13ae7a3d004b44bca08be03a3191157a38f"}
+       ;; jp-go-dds (デジタル庁デザインシステム) -- the workspace's BASE design
         ;; system. Used at BUILD TIME only, by `jobsearchops.render-html`,
         ;; to style docs/samples/operator-console.html; the actor's own
         ;; runtime code has no UI dependency.

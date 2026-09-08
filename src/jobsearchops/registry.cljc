@@ -43,7 +43,7 @@
   posting itself (that is `jobsearchops.operation`'s `:posting/
   publish`/`:posting/delist`, always human-gated -- see README
   `Actuation`)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn- unsigned-certificate
   "Every certificate this actor produces is UNSIGNED -- signature is
@@ -195,7 +195,7 @@
     (throw (ex-info "publication: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "publication: sequence must be >= 0" {})))
-  (let [publication-number (str (str/upper-case jurisdiction) "-PUB-" (zero-pad sequence 6))
+  (let [publication-number (str (str/upper jurisdiction) "-PUB-" (zero-pad sequence 6))
         record {"record_id" publication-number
                 "kind" "publication-draft"
                 "posting_id" posting-id
@@ -220,7 +220,7 @@
     (throw (ex-info "delisting: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "delisting: sequence must be >= 0" {})))
-  (let [delisting-number (str (str/upper-case jurisdiction) "-DLS-" (zero-pad sequence 6))
+  (let [delisting-number (str (str/upper jurisdiction) "-DLS-" (zero-pad sequence 6))
         record {"record_id" delisting-number
                 "kind" "delisting-draft"
                 "posting_id" posting-id
@@ -248,7 +248,7 @@
     (throw (ex-info "correction: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "correction: sequence must be >= 0" {})))
-  (let [correction-number (str (str/upper-case jurisdiction) "-COR-" (zero-pad sequence 6))
+  (let [correction-number (str (str/upper jurisdiction) "-COR-" (zero-pad sequence 6))
         record {"record_id" correction-number
                 "kind" "correction-draft"
                 "posting_id" posting-id
@@ -275,7 +275,7 @@
     (throw (ex-info "referral: applicant_ref required" {})))
   (when (< sequence 0)
     (throw (ex-info "referral: sequence must be >= 0" {})))
-  (let [referral-number (str (str/upper-case jurisdiction) "-REF-" (zero-pad sequence 6))
+  (let [referral-number (str (str/upper jurisdiction) "-REF-" (zero-pad sequence 6))
         record {"record_id" referral-number
                 "kind" "referral-draft"
                 "posting_id" posting-id

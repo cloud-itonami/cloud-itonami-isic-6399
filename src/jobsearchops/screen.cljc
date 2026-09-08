@@ -26,7 +26,7 @@
                UK Equality Act 2010, DEU AGG §11
     :other  -- 国籍/住居等: 職業安定法3条(均等待遇), 労働施策総合推進法,
                各法域の一般差別禁止規定"
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def suspect-phrases
   "category -> {:basis <statute string> :phrases [..]}. High-precision
@@ -47,11 +47,11 @@
   An empty result is NOT clearance -- it only means none of the
   starter phrases matched."
   [text]
-  (let [t (str/lower-case (str text))]
+  (let [t (str/lower (str text))]
     (vec
      (for [[category {:keys [basis phrases]}] suspect-phrases
            phrase phrases
-           :when (str/includes? t (str/lower-case phrase))]
+           :when (str/includes? t (str/lower phrase))]
        {:category category :phrase phrase :basis basis}))))
 
 (defn screen-posting

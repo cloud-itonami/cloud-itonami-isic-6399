@@ -90,7 +90,7 @@
 
   Usage: `clojure -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [jp-go-dds.skin]
             [langgraph.graph :as g]
             [jobsearchops.facts :as facts]
@@ -325,7 +325,7 @@
 
 (def ^:private approver-key?
   #(contains? #{"approved-by" "approved_by" "approver" "approved_by_id"}
-              (str/lower-case (str %))))
+              (str/lower (str %))))
 
 (defn- retains-approver?
   "Does any record in this register carry an approver key anywhere in its
