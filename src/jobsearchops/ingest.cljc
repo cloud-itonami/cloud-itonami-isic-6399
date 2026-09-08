@@ -46,7 +46,7 @@
   disclosures (a real GBR/DEU/FRA/JPN/KOR posting stating its own
   wage in its own currency) are a further follow-up once real verified
   examples of that disclosure shape are found -- not guessed at here."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn- parse-wage-number [s]
   #?(:clj (Double/parseDouble s)
