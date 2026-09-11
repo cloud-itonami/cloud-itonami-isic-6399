@@ -53,7 +53,7 @@ one).
 ## 2. Generate the board through the real actor
 
 ```bash
-nbb --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
+kbb --backend sci --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langchain-store/src:../../../kotoba-lang/langgraph/src" \
   generate.cljs postings.edn
 ```
 
@@ -68,7 +68,7 @@ the build.
 Check it:
 
 ```bash
-nbb verify_operator.cljs     # exercises the example file end-to-end
+kbb --backend sci verify_operator.cljk     # exercises the example file end-to-end
 open ../docs/index.html      # or serve docs/ locally
 ```
 

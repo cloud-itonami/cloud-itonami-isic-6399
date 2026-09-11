@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Fetches real, currently-open job postings from two public job-board
 ;; APIs (Greenhouse Job Board API, Lever Postings API) for every
 ;; company listed in web/sources.edn, normalizes them through

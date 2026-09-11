@@ -1,7 +1,7 @@
 ;; Example operator posting file for `generate.cljs` (see
 ;; docs/operator-quickstart.md). Copy to e.g. postings.edn, replace with
 ;; your own postings, and run:
-;;   nbb --classpath "..." generate.cljs postings.edn
+;;   kbb --backend sci --classpath "..." generate.cljs postings.edn
 ;; Every posting is assessed and submitted for publication through the
 ;; real actor at build time; the governor's holds appear on the page.
 ;;

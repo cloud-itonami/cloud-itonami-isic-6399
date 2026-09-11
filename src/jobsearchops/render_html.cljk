@@ -5,7 +5,7 @@
   the REAL actor stack -- `jobsearchops.operation` (a compiled langgraph
   StateGraph) -> `jobsearchops.governor` -> `jobsearchops.store` --
   through a scenario extended from this repo's own `jobsearchops.sim`
-  demo driver (`clojure -M:dev:run`, run BEFORE this file was written to
+  demo driver (`kbb -M:dev:run`, run BEFORE this file was written to
   confirm it produces a sensible ledger against the real seeded posting
   ids `posting-1`..`posting-7`), then renders the resulting store, audit
   ledger and coordination-artifact registers.
@@ -88,7 +88,7 @@
   generated id, and two consecutive runs are byte-identical (verified
   with `cmp`).
 
-  Usage: `clojure -M:dev:render-html [out-file]`
+  Usage: `kbb -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
   (:require [kotoba.lang.text :as str]
             [jp-go-dds.skin]
@@ -672,7 +672,7 @@
      "<span class=\"badge\">publication &amp; delisting are always a human&rsquo;s call</span> "
      "<span class=\"badge\">no applicant PII in this store</span></p>\n"
      "<p class=\"subtitle\">Generated at build time by <code>jobsearchops.render-html</code> "
-     "(<code>clojure -M:dev:render-html</code>) by actually running the compiled "
+     "(<code>kbb -M:dev:render-html</code>) by actually running the compiled "
      "<code>jobsearchops.operation</code> StateGraph over a freshly seeded store. "
      "Every value below was read back out of that run &mdash; there is no mock markup on this page, "
      "and no timestamp, so successive regenerations are byte-identical.</p>\n"
@@ -858,7 +858,7 @@
      "  is a human portal operator's call at every phase. Committing a proposal means a\n"
      "  coordination artifact was logged, never that a vacancy was verified to exist by anyone\n"
      "  other than the source that supplied it.</p>\n"
-     "  <p>Regenerate: <code>clojure -M:dev:render-html</code></p>\n"
+     "  <p>Regenerate: <code>kbb -M:dev:render-html</code></p>\n"
      "</footer>\n"
      "</body></html>\n")))
 

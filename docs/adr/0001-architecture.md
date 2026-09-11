@@ -206,7 +206,7 @@ auto-publishing or auto-delisting a posting).
 - `MemStore` ‖ `DatomicStore` parity is proven by
   `test/jobsearchops/store_contract_test.cljk`.
 - 40 tests / 184 assertions pass; lint is clean; the demo
-  (`clojure -M:dev:run`) walks two clean publish(+delist) lifecycles
+  (`kbb -M:dev:run`) walks two clean publish(+delist) lifecycles
   (no source consent required, source consent required-and-verified),
   plus five HARD-hold scenarios and both double-actuation guards,
   end-to-end.

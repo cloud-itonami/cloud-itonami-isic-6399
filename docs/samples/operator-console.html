@@ -2466,7 +2466,7 @@ img,svg { max-width: 100%; height: auto; }</style></head><body>
   <h1>Job-search portal / 募集情報等提供事業者 (ISIC 6399) &mdash; Operator Console</h1>
 </header>
 <p><span class="badge">read-only sample</span> <span class="badge">governor-gated</span> <span class="badge">publication &amp; delisting are always a human&rsquo;s call</span> <span class="badge">no applicant PII in this store</span></p>
-<p class="subtitle">Generated at build time by <code>jobsearchops.render-html</code> (<code>clojure -M:dev:render-html</code>) by actually running the compiled <code>jobsearchops.operation</code> StateGraph over a freshly seeded store. Every value below was read back out of that run &mdash; there is no mock markup on this page, and no timestamp, so successive regenerations are byte-identical.</p>
+<p class="subtitle">Generated at build time by <code>jobsearchops.render-html</code> (<code>kbb -M:dev:render-html</code>) by actually running the compiled <code>jobsearchops.operation</code> StateGraph over a freshly seeded store. Every value below was read back out of that run &mdash; there is no mock markup on this page, and no timestamp, so successive regenerations are byte-identical.</p>
 <main>
   <section class="card">
     <h2>Run summary</h2>
@@ -2833,6 +2833,6 @@ img,svg { max-width: 100%; height: auto; }</style></head><body>
   is a human portal operator's call at every phase. Committing a proposal means a
   coordination artifact was logged, never that a vacancy was verified to exist by anyone
   other than the source that supplied it.</p>
-  <p>Regenerate: <code>clojure -M:dev:render-html</code></p>
+  <p>Regenerate: <code>kbb -M:dev:render-html</code></p>
 </footer>
 </body></html>
