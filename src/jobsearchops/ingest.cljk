@@ -1,7 +1,7 @@
 (ns jobsearchops.ingest
   "Pure normalization: one real job-board-API job record -> this
   actor's posting-record shape (see `postings.example.edn`). No
-  network I/O lives here (that's `web/collect.cljs`) so this is
+  network I/O lives here (that's `web/collect.cljk`) so this is
   unit-testable in isolation, same split as `jobsearchops.registry`
   keeping ground-truth math separate from the graph that calls it.
 
@@ -36,13 +36,13 @@
   and nothing else -- no currency conversion, no annual-to-hourly
   guess, no filling in a number the source didn't state. A posting
   where no such range is found keeps `:compensation-verified? false`
-  and NO compensation fields at all; `web/generate.cljs` reads that
+  and NO compensation fields at all; `web/generate.cljk` reads that
   flag and assesses-but-does-not-publish such postings.
 
   KNOWN LIMITATION: `extract-hourly-range` only recognizes a literal
   \"$\" (USD) hourly range -- the only disclosure shape verified
   against real data so far (Greenhouse-hosted US postings; see
-  test/jobsearchops/ingest_test.clj's real fixtures). Non-USD
+  test/jobsearchops/ingest_test.cljk's real fixtures). Non-USD
   disclosures (a real GBR/DEU/FRA/JPN/KOR posting stating its own
   wage in its own currency) are a further follow-up once real verified
   examples of that disclosure shape are found -- not guessed at here."
@@ -56,7 +56,7 @@
   "Matches an UNAMBIGUOUS USD hourly-wage range the source itself
   printed, e.g. \"$17-$19 hourly\", \"$17.50 - $19.00 per hour\",
   \"$17/hr - $19/hr\" -- verified against real Carvana postings
-  (test/jobsearchops/ingest_test.clj). Requires the trailing hour/hr
+  (test/jobsearchops/ingest_test.cljk). Requires the trailing hour/hr
   unit so it doesn't mistake an unrelated dollar range (a signing
   bonus, an equipment allowance) for a wage; requires no comma in
   either number so it doesn't mistake a big comma-formatted annual
@@ -257,7 +257,7 @@
   `connector-id-prefixes`), as opposed to one the operator wrote by
   hand? The only honest discriminator between the two provenances, so
   every consumer that must not describe one as the other --
-  `close-vanished`'s carry-forward, `web/collect.cljs`, and the page's
+  `close-vanished`'s carry-forward, `web/collect.cljk`, and the page's
   own pending-postings copy -- shares this predicate instead of
   re-deriving it."
   [{:keys [id]}]

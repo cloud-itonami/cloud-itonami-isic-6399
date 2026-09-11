@@ -58,7 +58,7 @@ nbb --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go
 ```
 
 Every posting is assessed and submitted for publication through the
-actual OperationActor and the independent [Job Search Portal Governor](https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc). What the Governor rejects
+actual OperationActor and the independent [Job Search Portal Governor](https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljk). What the Governor rejects
 (stale vacancy, pay mismatch, missing source consent, discriminatory ad
 content, uncatalogued jurisdiction) lands in the page's transparency
 table with its real verdict; only governor-passed postings reach the

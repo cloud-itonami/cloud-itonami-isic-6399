@@ -1,6 +1,6 @@
 ;; Generates docs/index.html (the GitHub Pages demo UI) from EDN/Hiccup via
 ;; kotoba-lang/html + kotoba-lang/jp-go-digital-design-system -- markup/styling as data, not
-;; hand-quoted HTML strings -- following kototama/web/generate.cljs's own
+;; hand-quoted HTML strings -- following kototama/web/generate.cljk's own
 ;; precedent and the org's runtime priority (this is an nbb script; the
 ;; OUTPUT is a plain static page with no build step for a visiting browser;
 ;; in-browser interactivity is `search.cljs` run by scittle, i.e.
@@ -88,7 +88,7 @@
 
 ;; OPERATOR MODE, per posting: assess through the real actor always;
 ;; publish only when the posting's own record claims verified
-;; compensation ground truth. A posting ingested by web/collect.cljs
+;; compensation ground truth. A posting ingested by web/collect.cljk
 ;; (jobsearchops.ingest) carries :compensation-verified? false --
 ;; real-world postings almost never state a committed monthly-hours
 ;; figure alongside an hourly rate, and inventing the missing half
@@ -402,7 +402,7 @@
     {:title "Governor transparency — 掲載を拒否した求人票"}
     [:p {:class "mjs-lead"}
      "Indeed 型アグリゲーターとの違いはここです: 掲載判断は LLM でも運営者の裁量でもなく、"
-     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljc"}
+     [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/src/jobsearchops/governor.cljk"}
       "独立ガバナー"]
      " の HARD check が下します(人間の承認でも覆せません)。この表はハードコードではなく、"
      "ページ生成時に実際の OperationActor へ掲載を試行させ、ガバナーが拒否した実判定です。"]
@@ -420,7 +420,7 @@
      (dds/section
       {:title (str "実データ収集 — " (count collected-pending) " 件、賃金審査待ち(未掲載)")}
       [:p {:class "mjs-lead"}
-       [:code "web/collect.cljs"] " が実在企業の公開求人API(Greenhouse Job Board API、"
+       [:code "web/collect.cljk"] " が実在企業の公開求人API(Greenhouse Job Board API、"
        "認証不要・スクレイピングなし)から取得し、実 actor の "
        [:code ":jurisdiction/assess"] " を通過した実求人です。"
        [:strong "掲載(publish)は試行していません"] " — 求人元は時給レンジは開示しても"
@@ -498,7 +498,7 @@
      [:a {:href "https://github.com/cloud-itonami/cloud-itonami-isic-6399/blob/main/docs/adr/0001-architecture.md"} "architecture ADR"]
      " · 姉妹デモ: "
      [:a {:href "https://cloud-itonami.github.io/cloud-itonami-isic-6310/"} "Talent Board (isic-6310)"]
-     "。このページは " [:code "web/generate.cljs"] " (nbb) が実 actor を実行して生成し、検索は "
+     "。このページは " [:code "web/generate.cljk"] " (nbb) が実 actor を実行して生成し、検索は "
      [:code "search.cljs"] " (scittle = ブラウザ内 ClojureScript) が実行しています。"]]))
 
 ;; live-index postings as data for the in-browser search (search.cljs).
@@ -525,11 +525,11 @@
        body
        scripts)
       "\n"))
-(fs/copyFileSync "search.cljs" "../docs/search.cljs")
+(fs/copyFileSync "search.cljs" "../docs/search.cljk")
 ;; ブラウザ側 .cljs はコピーするだけ(ビルド無し)。
 (def html-root
   (or (some-> js/process.env.KOTOBA_HTML_ROOT not-empty) "../../../kotoba-lang/html"))
-(fs/copyFileSync (str html-root "/src/html/core.cljc") "../docs/html_core.cljs")
+(fs/copyFileSync (str html-root "/src/html/core.cljc") "../docs/html_core.cljk")
 (println (str "wrote docs/index.html (live-index " (count live-index)
               ", delisted " (count delisted)
               ", held " (count held)

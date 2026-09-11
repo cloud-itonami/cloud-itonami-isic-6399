@@ -1,6 +1,6 @@
 # Nightly regeneration -- the 的確表示義務 (keep postings accurate and
 # current) as automation: refresh web/postings.edn from real, live,
-# ToS-compliant open job-board sources (web/sources.edn -> web/collect.cljs
+# ToS-compliant open job-board sources (web/sources.edn -> web/collect.cljk
 # -> the public Greenhouse Job Board API, no auth/scraping/bot-detection
 # evasion -- see collect.cljs's own header), rebuild docs/ through the
 # real actor from that data, verify with the headless harnesses, and
