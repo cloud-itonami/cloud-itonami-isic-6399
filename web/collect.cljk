@@ -3,10 +3,10 @@
 ;; APIs (Greenhouse Job Board API, Lever Postings API) for every
 ;; company listed in web/sources.edn, normalizes them through
 ;; jobsearchops.ingest (portable, unit-tested in
-;; test/jobsearchops/ingest_test.clj), diffs against the previous
+;; test/jobsearchops/ingest_test.cljk), diffs against the previous
 ;; web/postings.edn to detect source-side closures, and writes the
 ;; merged result back to web/postings.edn -- the same file
-;; web/generate.cljs already knows how to walk through the REAL actor
+;; web/generate.cljk already knows how to walk through the REAL actor
 ;; (:jurisdiction/assess, then :posting/publish for postings with
 ;; :compensation-verified? true).
 ;;

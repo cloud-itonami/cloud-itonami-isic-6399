@@ -1,4 +1,4 @@
-;; Real, ToS-compliant source list for web/collect.cljs.
+;; Real, ToS-compliant source list for web/collect.cljk.
 ;;
 ;; Each entry is one company's OWN official job board, hosted on one
 ;; of two documented, unauthenticated, read-only vendor APIs published

@@ -156,7 +156,7 @@ prior governor's guards establish, informed by
 `jobsearchops.store/Store` is implemented by both `MemStore` (atom-
 backed, default for dev/tests/demo) and `DatomicStore` (`langchain.
 db`-backed), proven to satisfy the same contract in
-`test/jobsearchops/store_contract_test.clj`.
+`test/jobsearchops/store_contract_test.cljk`.
 
 ### Decision 10: no robotics
 
@@ -204,7 +204,7 @@ auto-publishing or auto-delisting a posting).
   (的確表示義務 etc.), while candidate matching/placement stays in
   7810 and generic portal curation stays in 6312.
 - `MemStore` ‖ `DatomicStore` parity is proven by
-  `test/jobsearchops/store_contract_test.clj`.
+  `test/jobsearchops/store_contract_test.cljk`.
 - 40 tests / 184 assertions pass; lint is clean; the demo
   (`clojure -M:dev:run`) walks two clean publish(+delist) lifecycles
   (no source consent required, source consent required-and-verified),

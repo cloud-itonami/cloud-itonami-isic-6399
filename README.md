@@ -131,7 +131,7 @@ clojure -M:lint        # clj-kondo (errors fail; CI mirrors this)
 
 ## Real-advisor verification (live model)
 
-`dev/real_advisor_check.clj` builds the actor with the REAL
+`dev/real_advisor_check.cljk` builds the actor with the REAL
 `llm-advisor` over the murakumo fleet's keyless Ollama nodes and proves
 the invariant that matters live: whatever the model emits, a posting
 whose STORE ground truth violates a HARD check is HELD (stale vacancy,
@@ -153,21 +153,21 @@ for the fork-to-published walkthrough.
 
 The demo above is a
 static, zero-build search UI (synthetic data). NOTHING on it is
-hand-typed: `web/generate.cljs` (nbb) runs the FULL OperationActor
+hand-typed: `web/generate.cljk` (nbb) runs the FULL OperationActor
 StateGraph at build time (ingest -> assess -> publish -> delist with
 approval interrupts, plus every HARD-hold attempt and a double-publish
 attempt), then renders the post-run Store as the live index, the real
 refusal verdicts as the transparency table, and the append-only audit
 ledger those runs actually wrote. In-browser search is
-`web/search.cljs` run by scittle (ClojureScript in the browser -- no
-hand-written JS, no build step). `web/verify_search.cljs` is the
+`web/search.cljk` run by scittle (ClojureScript in the browser -- no
+hand-written JS, no build step). `web/verify_search.cljk` is the
 headless nbb harness that exercises the real client logic against the
 real generated page.
 
 ```bash
 cd web && ../../../../node_modules/.bin/nbb \
   --classpath "../src:../../../kotoba-lang/html/src:../../../kotoba-lang/jp-go-digital-design-system/src:../../../kotoba-lang/langchain/src:../../../kotoba-lang/langgraph/src" \
-  generate.cljs          # regenerate docs/index.html + docs/search.cljs
+  generate.cljs          # regenerate docs/index.html + docs/search.cljk
 ../../../../node_modules/.bin/nbb verify_search.cljs   # headless UI logic check
 ```
 
@@ -177,7 +177,7 @@ superproject **ADR-2607261600**: この actor は職業安定法5条の4（的�
 ソフトウェアとして実装しており、日本の公的サービスの視覚言語に揃える方が
 利用者の信頼判断に効く）。DADS は **light mode 固定**（上流デジタル庁に dark
 palette が無い）なので、移行前の `prefers-color-scheme` による dark 対応は
-意図的に落としています。`web/generate.cljs` が読む vendored `dds.css` のパスは、
+意図的に落としています。`web/generate.cljk` が読む vendored `dds.css` のパスは、
 monorepo 以外のレイアウト（CI / git worktree）からは環境変数 `JP_GO_DDS_CSS`
 で上書きできます。
 
@@ -231,14 +231,14 @@ precedent).
 
 | File | Role |
 |---|---|
-| `src/jobsearchops/store.cljc` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + publication AND delisting history (dual history). The double-actuation guard checks dedicated `:published?`/`:delisted?` booleans rather than a `:status` value |
-| `src/jobsearchops/registry.cljc` | Publication/delisting draft records, plus `displayed-compensation-matches-claim?` -- an honest reapplication of the SAME ground-truth-recompute discipline every sibling actor's own cost/total-matching check establishes |
-| `src/jobsearchops/facts.cljc` | Per-jurisdiction job-advertising AND source-republication/database-right catalog with an official spec-basis citation per entry, honest coverage reporting -- ALL SIX seeded jurisdictions have a consent sub-citation here |
-| `src/jobsearchops/jobsearchopsllm.cljc` | **JobSearch-LLM** -- `mock-advisor` ‖ `llm-advisor`; ingest/jurisdiction-assessment/publication/delisting proposals |
-| `src/jobsearchops/governor.cljc` | **Job Search Portal Governor** -- 6 named HARD checks (spec-basis · evidence-incomplete · stale-vacancy, FLAGSHIP domain-unique · ad-content-discriminatory, reapplied · displayed-compensation-mismatch, ground-truth · source-consent-unverified, CONDITIONAL) + 2 double-actuation guards + 1 soft (confidence/actuation gate) |
-| `src/jobsearchops/phase.cljc` | **Phase 0→3** -- read-only → assisted ingest → assisted assess → supervised (publish/delist always human; posting ingest is the ONLY auto-eligible op, no direct public-facing risk) |
-| `src/jobsearchops/operation.cljc` | **OperationActor** -- langgraph StateGraph |
-| `src/jobsearchops/sim.cljc` | demo driver |
+| `src/jobsearchops/store.cljk` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + publication AND delisting history (dual history). The double-actuation guard checks dedicated `:published?`/`:delisted?` booleans rather than a `:status` value |
+| `src/jobsearchops/registry.cljk` | Publication/delisting draft records, plus `displayed-compensation-matches-claim?` -- an honest reapplication of the SAME ground-truth-recompute discipline every sibling actor's own cost/total-matching check establishes |
+| `src/jobsearchops/facts.cljk` | Per-jurisdiction job-advertising AND source-republication/database-right catalog with an official spec-basis citation per entry, honest coverage reporting -- ALL SIX seeded jurisdictions have a consent sub-citation here |
+| `src/jobsearchops/jobsearchopsllm.cljk` | **JobSearch-LLM** -- `mock-advisor` ‖ `llm-advisor`; ingest/jurisdiction-assessment/publication/delisting proposals |
+| `src/jobsearchops/governor.cljk` | **Job Search Portal Governor** -- 6 named HARD checks (spec-basis · evidence-incomplete · stale-vacancy, FLAGSHIP domain-unique · ad-content-discriminatory, reapplied · displayed-compensation-mismatch, ground-truth · source-consent-unverified, CONDITIONAL) + 2 double-actuation guards + 1 soft (confidence/actuation gate) |
+| `src/jobsearchops/phase.cljk` | **Phase 0→3** -- read-only → assisted ingest → assisted assess → supervised (publish/delist always human; posting ingest is the ONLY auto-eligible op, no direct public-facing risk) |
+| `src/jobsearchops/operation.cljk` | **OperationActor** -- langgraph StateGraph |
+| `src/jobsearchops/sim.cljk` | demo driver |
 | `test/jobsearchops/*_test.clj` | governor contract · phase invariants · store parity · registry conformance · facts coverage |
 | `wasm/displayed_compensation.kotoba` | PoC: a WASM-compiled (`kotoba-lang/kotoba` -> `kotoba-lang/kototama`'s `actor:host` ABI) port of `registry.cljc`'s `displayed-compensation-matches-claim?` ground-truth recompute -- see `wasm/README.md` for scope, the input/output ABI, and what's out of scope (Store, the posting lookup, the governor's op-gate) |
 

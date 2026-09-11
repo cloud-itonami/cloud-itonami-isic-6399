@@ -3,12 +3,12 @@
 `displayed_compensation.kotoba` is a port of `jobsearchops.registry/
 displayed-compensation-matches-claim?`'s pure ground-truth comparison —
 does a posting's own displayed compensation equal source-hourly-wage x
-source-monthly-hours? (see `src/jobsearchops/registry.cljc` lines ~47-62,
-consumed by `src/jobsearchops/governor.cljc`'s
+source-monthly-hours? (see `src/jobsearchops/registry.cljk` lines ~47-62,
+consumed by `src/jobsearchops/governor.cljk`'s
 `displayed-compensation-mismatch-violations`, lines ~251-265) — into the
 minimal `.kotoba` language subset, compiled to a real WASM module via
 `kotoba wasm emit`, and hosted via `kototama.tender`
-(`test/wasm/displayed_compensation_test.clj`).
+(`test/wasm/displayed_compensation_test.cljk`).
 
 This follows the same `kotoba wasm emit` → `kototama.tender` pattern
 already proven by `cloud-itonami-isic-6492`'s `wasm/affordability.kotoba`,
@@ -38,8 +38,8 @@ interpreter). The port therefore:
   destructuring (no maps in the wasm-compilable subset).
 - Drops `registry.cljc`'s `(double ...)` casts entirely: every real
   `:source-hourly-wage`/`:source-monthly-hours`/`:displayed-compensation`
-  fixture in this repo (`src/jobsearchops/store.cljc`,
-  `test/jobsearchops/registry_test.clj`) is an exact-integer yen amount
+  fixture in this repo (`src/jobsearchops/store.cljk`,
+  `test/jobsearchops/registry_test.cljk`) is an exact-integer yen amount
   (yen has no sub-unit) and an integer hour count — the `double` cast in
   the JVM source exists only so `==` compares a `long` product against a
   literal-`.0` fixture value, not because the domain has genuine cents/

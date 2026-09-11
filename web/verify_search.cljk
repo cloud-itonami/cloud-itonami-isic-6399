@@ -1,4 +1,4 @@
-;; Headless verification harness for docs/search.cljs -- stubs the DOM
+;; Headless verification harness for docs/search.cljk -- stubs the DOM
 ;; surface search.cljs touches (getElementById / textContent / value /
 ;; innerHTML / hidden / addEventListener), feeds it the REAL JSON block
 ;; extracted from the generated docs/index.html, loads search.cljs, and
@@ -45,7 +45,7 @@
 
 ;; ---- load the real client code --------------------------------------------
 
-(load-string (fs/readFileSync "../docs/search.cljs" "utf8"))
+(load-string (fs/readFileSync "../docs/search.cljk" "utf8"))
 
 (defn- results-html [] (aget (get elements "results") "innerHTML"))
 (defn- assert! [ok? msg]
