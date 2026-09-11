@@ -19,7 +19,7 @@
 
   NOT part of the CI suite: needs the tailnet + a fleet node. Run:
 
-    clojure -Sdeps '{:paths [\"src\" \"dev\"]
+    kbb -Sdeps '{:paths [\"src\" \"dev\"]
                      :deps {http-kit/http-kit {:mvn/version \"2.8.0\"}
                             metosin/jsonista {:mvn/version \"0.3.8\"}}}' \\
       -M:dev -m real-advisor-check [ollama-base-url] [model-name]

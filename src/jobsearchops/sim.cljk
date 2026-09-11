@@ -1,5 +1,5 @@
 (ns jobsearchops.sim
-  "Demo driver -- `clojure -M:dev:run`. Walks a clean posting through
+  "Demo driver -- `kbb -M:dev:run`. Walks a clean posting through
   ingest -> jurisdiction assessment -> publication (escalate/approve/
   commit) -> delisting (escalate/approve/commit), then a SEPARATE
   clean source-consent-required posting through ingest -> assessment ->
