@@ -499,7 +499,7 @@
      " · 姉妹デモ: "
      [:a {:href "https://cloud-itonami.github.io/cloud-itonami-isic-6310/"} "Talent Board (isic-6310)"]
      "。このページは " [:code "web/generate.cljk"] " (nbb) が実 actor を実行して生成し、検索は "
-     [:code "search.cljs"] " (scittle = ブラウザ内 ClojureScript) が実行しています。"]]))
+     [:code "search.cljk"] " (scittle = ブラウザ内 ClojureScript) が実行しています。"]]))
 
 ;; live-index postings as data for the in-browser search (search.cljs).
 ;; script は html.core の raw-text tag なので子は素の文字列で渡す
@@ -511,7 +511,7 @@
    ;; search.cljs は hiccup を html.core で文字列化する(生 HTML を書かない)ので、
    ;; そのライブラリもブラウザへ同梱する。読み込み順は依存順。
    [:script {:type "application/x-scittle" :src "html_core.cljs"}]
-   [:script {:type "application/x-scittle" :src "search.cljs"}]])
+   [:script {:type "application/x-scittle" :src "search.cljk"}]])
 
 (fs/mkdirSync "../docs" #js {:recursive true})
 (fs/writeFileSync
@@ -525,7 +525,7 @@
        body
        scripts)
       "\n"))
-(fs/copyFileSync "search.cljs" "../docs/search.cljk")
+(fs/copyFileSync "search.cljk" "../docs/search.cljk")
 ;; ブラウザ側 .cljs はコピーするだけ(ビルド無し)。
 (def html-root
   (or (some-> js/process.env.KOTOBA_HTML_ROOT not-empty) "../../../kotoba-lang/html"))
