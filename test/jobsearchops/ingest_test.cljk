@@ -1,5 +1,5 @@
 (ns jobsearchops.ingest-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [jobsearchops.ingest :as ingest]))
 
 ;; Fixture shape mirrors real Greenhouse Job Board API responses

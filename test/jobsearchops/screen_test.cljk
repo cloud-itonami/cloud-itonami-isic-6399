@@ -4,7 +4,7 @@
   an empty result is not clearance, and the governor namespace has no
   dependency on this one (verified by the absence of any require -- see
   jobsearchops.governor's ns form)."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [jobsearchops.screen :as screen]))
 
 (deftest age-restrictions-are-flagged-with-basis
