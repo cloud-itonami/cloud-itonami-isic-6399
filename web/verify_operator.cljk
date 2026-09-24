@@ -27,7 +27,7 @@
            ":../../../kotoba-lang/langgraph/src")))
 
 (defn- generate! [& args]
-  (cp/execFileSync nbb (clj->js (concat ["--classpath" classpath "generate.cljs"] args))
+  (cp/execFileSync nbb (clj->js (concat ["--classpath" classpath "generate.cljk"] args))
                    #js {:stdio "inherit"}))
 
 (defn- assert! [ok? msg]
