@@ -25,7 +25,7 @@
 ;; Run (from this web/ directory, inside the monorepo checkout):
 ;;   ../../../../node_modules/.bin/nbb --classpath "../src" collect.cljs
 (ns collect
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.lang.edn :as edn]
             [kotoba.lang.text :as str]
             [jobsearchops.ingest :as ingest]
             ["fs" :as fs]))
