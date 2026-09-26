@@ -510,7 +510,7 @@
    [:script {:src "https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js"}]
    ;; search.cljs は hiccup を html.core で文字列化する(生 HTML を書かない)ので、
    ;; そのライブラリもブラウザへ同梱する。読み込み順は依存順。
-   [:script {:type "application/x-scittle" :src "html_core.cljs"}]
+   [:script {:type "application/x-scittle" :src "html_core.cljk"}]
    [:script {:type "application/x-scittle" :src "search.cljk"}]])
 
 (fs/mkdirSync "../docs" #js {:recursive true})
