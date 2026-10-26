@@ -54,7 +54,7 @@
  {;; offline workspace dev -- pin transitive langchain to local checkout
   :dev {:override-deps
         {io.github.kotoba-lang/langchain
-         {:local/root "../../kotoba-lang/langchain"}}}
+        {:local/root "../../kotoba-lang/kotoba/lib/kotoba.langchain"}}}
   ;; kbb -M:dev:run  -> drive the demo through one OperationActor
   :run {:main-opts ["-m" "jobsearchops.sim"]}
   ;; kbb -M:dev:render-html [out-file] -> regenerate
@@ -68,7 +68,7 @@
                       ;; build (see wasm/README.md) -- test-only, the actor's
                       ;; own runtime code has no wasm/host dependency.
                       io.github.kotoba-lang/kototama
-                      {:local/root "../../kotoba-lang/kototama"}}
+        {:local/root "../../kotoba-lang/kotoba/lib/kotoba.kototama"}}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
   ;; static analysis -- clj-kondo from deps (no binary), errors fail CI.
